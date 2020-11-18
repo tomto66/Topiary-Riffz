@@ -1,3 +1,5 @@
+NOTHING HERE YET - TOPIARY RIFFZ IS STILL IN DEVELOPMENT - A TEST VERSION SHOULD SHOW UP SHORTLY.
+
 Only Win64 for now!
 
 Download and put the dll in your VST2 directory.  Possibily you'll need your host  to re-scan that directory.
