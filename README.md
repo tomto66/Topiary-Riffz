@@ -1,6 +1,6 @@
 # Topiary Riffz 0.7.0
 
-Topiary Riffz is a plugin for beats & drums.
+Topiary Riffz is a plugin to assign midi patterns to keys, and potentially transpose these patterns.
 
 * Topiary Riffz folder contains the code and a projucer file
 * Topiary folder contains code used by other Topiary modules; code is duplicated to make it easy for you :)
@@ -15,11 +15,11 @@ Careful: binary data is provided in the Topiary/JuceLibraryCode folder - make su
 
 * Tested/Compiled with Juce 6.1 / Visual Studio 2019 / VST2 / Windows10/X64.
 * Tested in Cantabile 3, Reaper and Cubase LE.
-* See here for known bugs (none @ release time)  ( https://github.com/tomto66/Topiary-Beatz/issues?q=is%3Aopen+is%3Aissue+label%3Abug )
+* See here for known bugs (none @ release time)  ( https://github.com/tomto66/Topiary-Riffz/issues?q=is%3Aopen+is%3Aissue+label%3Abug )
 
 ## Installing binaries
 
-* Plugin is found under Topiary Beatz / binaries.  Feel free to rename it.
+* Plugin is found under Topiary Riffz / binaries.  Feel free to rename it.
 * Install in your VST2 plugin folder.  Your host may need to rescan that folder.
 
 ## Manual
