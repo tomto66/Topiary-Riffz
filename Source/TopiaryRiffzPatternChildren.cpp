@@ -103,7 +103,7 @@ void PatternLengthComponent::paint(Graphics& g)
 
 	g.drawText("Length in measures/beats/ticks", 0, 0, 200, (int)labelOffset, juce::Justification::centredLeft);
 	auto area = getLocalBounds();
-	auto recBounds = area.removeFromBottom(area.getHeight() - labelOffset);
+	auto recBounds = area.removeFromBottom(area.getHeight() - labelOffset); 
 	g.drawRoundedRectangle((float)recBounds.getX() + lineWidth, (float)recBounds.getY() + lineWidth, (float)recBounds.getWidth() - 2 * lineWidth, (float)recBounds.getHeight() - 2 * lineWidth, (float)lineWidth, (float)lineWidth);
 
 	// turn it into inner rectangle

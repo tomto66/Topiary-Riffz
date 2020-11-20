@@ -138,15 +138,12 @@ void TopiaryRiffzVariationComponent::getVariationDefinition()
 {
 	// get from model
 
-	if (variation != (variationDefinitionComponent.variationCombo.getSelectedId() - 1) )
-	{
-		variation = variationDefinitionComponent.variationCombo.getSelectedId() - 1;
-		if (variation != -1 && !getVariationCalledFromChangeInVariationButton)  // because otherwise the variation is already set in the editor
+	variation = variationDefinitionComponent.variationCombo.getSelectedId() - 1;
+	if (variation != -1 && !getVariationCalledFromChangeInVariationButton)  // because otherwise the variation is already set in the editor
 			riffzModel->setVariation(variation); // so that the variation buttons follow
 
 		// make sure the noteassignment table is linked to the variation selected
-		noteAssignmentComponent.noteAssignmentTable.setModel(riffzModel->getNoteAssignment(variation));
-	}
+	noteAssignmentComponent.noteAssignmentTable.setModel(riffzModel->getNoteAssignment(variation));
 
 	if (variation <0 ) return;  // this should never happen, except when initializing
 
@@ -242,10 +239,14 @@ void TopiaryRiffzVariationComponent::setNoteLength()
 
 } // setNoteLength
 
+/////////////////////////////////////////////////////////////////////////
+
 void TopiaryRiffzVariationComponent::getNoteLength()
 {
 	int v, value;
 	bool enable, plus, min;
+
+	v = 0;
 
 	riffzModel->getRandomizeLength(v, enable, value, plus, min);
 	
@@ -255,7 +256,6 @@ void TopiaryRiffzVariationComponent::getNoteLength()
 	noteLengthComponent.minusButton.setToggleState(min, dontSendNotification);
 
 } // getNoteLength
-
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -384,6 +384,7 @@ void TopiaryRiffzVariationComponent::setNoteAssignment()
 {
 	// if nothing selected in the table, save as a new one
 	// if something selected, overwrite the assignment
+	jassert(false);
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -412,8 +413,11 @@ void TopiaryRiffzVariationComponent::actionListenerCallback(const String &messag
 		{
 			if (patterns[i].compare(""))
 				noteAssignmentComponent.patternCombo.addItem(patterns[i], i+1);		
-		}
+		} 
 
+		// reinitialize the notassignemnttable, because it may have labels of patterns that got renamed
+		noteAssignmentComponent.noteAssignmentTable.updateContent();
+	
 		// if there are no patterns, disable yourself!!!
 		if (riffzModel->getNumPatterns()>0)
 			this->setEnabled(true);
@@ -423,7 +427,7 @@ void TopiaryRiffzVariationComponent::actionListenerCallback(const String &messag
 		if (remember <= noteAssignmentComponent.patternCombo.getNumItems())
 			noteAssignmentComponent.patternCombo.setSelectedId(remember, dontSendNotification);
 		else
-			noteAssignmentComponent.patternCombo.setSelectedId(1, dontSendNotification);
+			noteAssignmentComponent.patternCombo.setSelectedId(0, dontSendNotification);
 	}
 	else if (message.compare(MsgVariationSelected) == 0)
 	{
@@ -456,7 +460,7 @@ void TopiaryRiffzVariationComponent::actionListenerCallback(const String &messag
 			riffzModel->getNoteAssignment(variation, selected, n, o, patternId);
 			noteAssignmentComponent.noteEditor.setText(n, dontSendNotification);
 			noteAssignmentComponent.offsetEditor.setText(String(o), dontSendNotification);
-			noteAssignmentComponent.patternCombo.setSelectedId(selected+1, dontSendNotification);
+			noteAssignmentComponent.patternCombo.setSelectedId(patternId+1, dontSendNotification);
 			noteAssignmentComponent.noteEditor.setEnabled(true);
 			noteAssignmentComponent.offsetEditor.setEnabled(true);
 			noteAssignmentComponent.patternCombo.setEnabled(true); 
@@ -528,13 +532,28 @@ void TopiaryRiffzVariationComponent::resized()
 void TopiaryRiffzVariationComponent::saveNoteAssignment()
 {
 	// make sure note is valid
+	if (noteAssignmentComponent.noteEditor.getText().compare("")==0)
+	{
+		riffzModel->Log("No note selected.", Topiary::LogType::Warning);
+		return;
+	}
 
-	String validatedText = validateNote(noteAssignmentComponent.noteEditor.getText());
+	String validatedText = validateNote(noteAssignmentComponent.noteEditor.getText());  
+	String debug = noteAssignmentComponent.noteEditor.getText();
+	if (validatedText.compare(noteAssignmentComponent.noteEditor.getText().toUpperCase())!=0)		
+	// invalid note
+	{
+		riffzModel->Log("Invalid note.", Topiary::LogType::Warning);
+		return;
+	}
+
 	noteAssignmentComponent.noteEditor.setText(validatedText, dontSendNotification);
 
 	int notenumber = validNoteNumber(validatedText);
 	
 	// make sure offset is integer and note = offset is valid
+	if (noteAssignmentComponent.offsetEditor.getText().compare("") == 0)
+		noteAssignmentComponent.offsetEditor.setText("0", dontSendNotification);
 	int offset = noteAssignmentComponent.offsetEditor.getText().getIntValue();
 
 	if (((notenumber + offset) < 0) || ((notenumber + offset) > 127))
@@ -551,8 +570,9 @@ void TopiaryRiffzVariationComponent::saveNoteAssignment()
 	}
 
 	riffzModel->saveNoteAssignment(variation, notenumber, offset, noteAssignmentComponent.patternCombo.getSelectedItemIndex());
-
+	noteAssignmentComponent.noteAssignmentTable.updateContent();
 	// make sure something is selected in the table
+	noteAssignmentComponent.noteAssignmentTable.selectRow(-1);// otherwise if row 0 is selected and edited, the edit does not show
 	noteAssignmentComponent.noteAssignmentTable.selectRow(0);
 
 } // saveNoteAssignment
@@ -567,6 +587,9 @@ void TopiaryRiffzVariationComponent::deleteNoteAssignment()
 	{
 		riffzModel->deleteNoteAssignment(variation, selected);
 		noteAssignmentComponent.noteAssignmentTable.updateContent();
+		// make sure something is selected in the table
+		noteAssignmentComponent.noteAssignmentTable.selectRow(-1);// otherwise if row 0 is selected and edited, the edit does not show
+		noteAssignmentComponent.noteAssignmentTable.selectRow(0);
 	}
 	
 

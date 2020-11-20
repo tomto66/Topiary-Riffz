@@ -259,7 +259,7 @@ void NoteAssignmentList::getFromModel(XmlElement *model)
 
 } // getFromModel
 
-
+ 
 /////////////////////////////////////////////////////////////////////////////
 
 void NoteAssignmentList::validateTableEdit(int p, XmlElement* child, String attribute)
@@ -280,9 +280,34 @@ void NoteAssignmentList::setRiffzModel(TopiaryRiffzModel* m)
 
 /////////////////////////////////////////////////////////////////////////////
 
-
 void NoteAssignmentList::selectedRowsChanged(int lastRowSelected)
 {
 	UNUSED(lastRowSelected)
 	riffzModel->broadcaster.sendActionMessage(MsgSelectedNoteAssignmentRowsChanged); // may need to disable the variation!
 }
+
+/////////////////////////////////////////////////////////////////////////////
+
+int NoteAssignmentList::findOffset(int note)
+{
+	// loop over all noteAssignments till you find this note, return 0 if nothing found
+	
+	int offset = 0;
+	for (int i=0; i<numItems;i++)
+		if (dataList[i].note == note)
+		{
+			offset = dataList[i].offset;
+			i = numItems;
+		}
+	return offset;
+} // findOffset
+
+/////////////////////////////////////////////////////////////////////////////
+
+void NoteAssignmentList::redoPatternNames(int patternId, String patternName)
+{
+	// called when patternID changes name - references here should be renamed
+	for (int i = 0; i < numItems; i++)
+		if (dataList[i].patternId == patternId)
+			dataList[i].patternName = patternName;
+} // redoPatternNames

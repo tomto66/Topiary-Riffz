@@ -24,6 +24,7 @@ along with Topiary Riffz. If not, see <https://www.gnu.org/licenses/>.
 #include "../../Topiary/Source/Model/TopiaryPattern.h"
 #include "../../Topiary/Source/Model/TopiaryVariation.h"
 #include "../../Topiary/Source/Model/TopiaryNoteOffBuffer.h"
+#include "../../Topiary/Source/Model/TopiaryKeytracker.h"
 #include "../../Topiary/Source/Components/TopiaryMidiLearnEditor.h"
 
 #include "NoteAssignmentList.h"
@@ -41,12 +42,7 @@ public:
 		SwingQRadioID = 3000
 	};
 
-	enum NoteOrder
-	{
-		Highest = 5001,
-		Lowest = 5002
-	};
-
+	
 	TopiaryRiffzModel();
 	~TopiaryRiffzModel();
 
@@ -90,6 +86,7 @@ public:
 	bool processVariationSwitch() override;
 	bool switchingVariations() override;
 	void initializeVariationsForRunning() override;
+	void setRunState(int n) override;
 	void initializePreviousSteadyVariation();
 	void generateMidi(MidiBuffer* midiBuffer, MidiBuffer* recBuffer) override;
 	
@@ -117,7 +114,7 @@ public:
 	void saveNoteAssignment(int v, int n, int o, int p);
 	void getNoteAssignment(int v, int i, String& n, int& o, int& patternId);
 	void deleteNoteAssignment(int v, int i);
-	int getVariationLenInTicks(int v, int p); 
+	//int getVariationLenInTicks(int v, int p); 
 
 	NoteAssignmentList* getNoteAssignment(int v);
 	void setSwingQ(int v, int q);
@@ -185,11 +182,12 @@ public:
 		PatternLookUp patternLookUp[MAXPATTERNSINVARIATION];  
 	};
 
-	void swapVariation(int from, int to) override;
-	void copyVariation(int from, int to) override;
+	void swapVariation(int from, int to) override; 
+	void copyVariation(int from, int to) override; 
 	bool midiLearn(MidiMessage m); // called by processor
 	void record(bool b) override; // tells model to record or not; at end of recording it processes the new notes
 	void processMidiRecording() override; // add recorded events to the pattern
+	void maintainParentPattern();
 
 	TopiaryPatternList* getPatternList();
 	TopiaryPattern* getPattern(int p);
@@ -200,7 +198,11 @@ public:
 
 	void outputNoteOn(int noteNumber);
 	void outputNoteOff(int noteNumber);
+	TopiaryKeytracker keytracker;
+	TopiaryVariation* parentPattern; // maintained by void maintainParentattern in processvariationSwitch
 
+	int keyRangeFrom = 0;
+	int keyRangeTo = 127;
 #define NUMBEROFQUANTIZERS 10
 
 private:
@@ -208,18 +210,18 @@ private:
 	TopiaryPattern patternData[MAXNOPATTERNS];
 	Variation variation[8];  	// struct to hold variation detail
 	TopiaryNoteOffBuffer noteOffBuffer;
-	int notePlaying = -1;		// note that is generating output
-	int nextNotePlaying = -1;	// if <> notePlaying, next one to use to generate output
+	
 	int outputChannel = 1;		// output of plugin
 	bool latch = true;		// keep playing last note
-	int keyRangeFrom = 0;
-	int keyRangeTo = 127;
-	int noteOrder;
+	
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "..//..//Topiary/Source/Model/LoadMidiPattern.cpp.h"	
 #include "../../Topiary/Source/Model/Swing.cpp.h"
+
+	
+	//////////////////////////////////////////////////////////////////////////////////////////////////
 
 	bool patternAssigned(int v, int p)
 	{
@@ -276,29 +278,13 @@ private:
 		int j;
 		for (j = 0; j < MAXPATTERNSINVARIATION; j++)
 		{
-			if (variation[v].patternLookUp->patternInVariationId == p)
-				return variation[v].patternLookUp->patternId;
+			if (variation[v].patternLookUp[j].patternInVariationId == p)
+				return variation[v].patternLookUp[j].patternId;
 		}
 		jassert(j < MAXPATTERNSINVARIATION); // corrupt data!
+		return 0;
 
 	}  // findPatternInVariation
-
-	//////////////////////////////////////////////////////////////////////////////////////////////////
-
-	void processNote(MidiMessage &m)
-	{
-		// m is either noteOn or noteOff
-		// if noteOn
-		//    see if it is different from notePlaying;
-		//    if so, see if we have this defined in the variation that is running and based on other notes in noteOffBuffer
-		//    if so, set nextNotePlaying
-		// if noteOff
-		// 	see what else is still on (in TopiaryNoteOffBuffer and base your decision on that
-
-
-		jassert(false);
-
-	} // processNote
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -332,7 +318,7 @@ private:
 		addToModel(parameters, outputChannel, "outputChannel");
 		addToModel(parameters, keyRangeFrom, "keyRangeFrom");
 		addToModel(parameters, keyRangeTo, "keyRangeTo");
-		addToModel(parameters, noteOrder, "noteOrder");
+		addToModel(parameters, keytracker.noteOrder, "noteOrder");
 
 		addToModel(parameters, overrideHostTransport, "overrideHostTransport");
 		addToModel(parameters, notePassThrough, "notePassThrough");
@@ -444,14 +430,14 @@ private:
 
 						else if (parameterName.compare("switchVariation") == 0) switchVariation = parameter->getIntAttribute("Value");
 						else if (parameterName.compare("runStopQ") == 0) runStopQ = parameter->getIntAttribute("Value");
-						else if (parameterName.compare("noteOrder") == 0) noteOrder = parameter->getIntAttribute("Value");
+						else if (parameterName.compare("noteOrder") == 0) keytracker.noteOrder = parameter->getIntAttribute("Value");
 						else if (parameterName.compare("variationStartQ") == 0) variationStartQ = parameter->getIntAttribute("Value");
 						else if (parameterName.compare("name") == 0) name = parameter->getStringAttribute("Value");
 
 						else if (parameterName.compare("keyRangeFrom") == 0) keyRangeFrom = parameter->getIntAttribute("Value");
 						else if (parameterName.compare("keyRangeTo") == 0) keyRangeTo = parameter->getIntAttribute("Value");
 						else if (parameterName.compare("latch") == 0) latch = parameter->getBoolAttribute("Value");
-						else if (parameterName.compare("outputChannel") == 0) outputChannel = parameter->getIntAttribute("Value");
+						else if (parameterName.compare("outputChannel") == 0)outputChannel = parameter->getIntAttribute("Value");
 
 						else if (parameterName.compare("WFFN") == 0)	WFFN = parameter->getBoolAttribute("Value");
 						else if (parameterName.compare("notePassThrough") == 0) 	notePassThrough = parameter->getBoolAttribute("Value");
@@ -540,11 +526,7 @@ private:
 
 		for (int i = 0; i < 8; i++)
 		{
-			
 			redoPatternLookup(i);
-
-			//if (variation[i].patternToUse >=0)
-			//	variation[i].pattern.patLenInTicks = patternData[variation[i].patternToUse].patLenInTicks;
 		}
 
 		variationSelected = 0;

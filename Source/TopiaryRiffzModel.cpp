@@ -23,6 +23,7 @@ along with Topiary Riffz. If not, see <https://www.gnu.org/licenses/>.
 // following has std model code that can be included (cannot be in TopiaryModel because of variable definitions)
 #include"../../Topiary/Source/Model/TopiaryModel.cpp.h"
 #include "../../Topiary/Source/Model/TopiaryPattern.cpp.h"
+#include "../../Topiary/Source/Model/TopiaryPatternList.cpp.h"
 
 void TopiaryRiffzModel::saveStateToMemoryBlock(MemoryBlock& destData)
 {
@@ -68,6 +69,8 @@ TopiaryRiffzModel::TopiaryRiffzModel()
 
 	name = "New Riffz";
 	// give some of the children yourself as model
+
+	patternList.setModel(this);
 
 	for (int p = 0; p < 8; p++)
 		patternData[p].setModel(this);
@@ -136,7 +139,7 @@ TopiaryRiffzModel::TopiaryRiffzModel()
 	variationSwitchChannel = 0;
 
 	overrideHostTransport = true;
-	noteOrder = NoteOrder::Lowest;
+	keytracker.noteOrder = TopiaryKeytracker::NoteOrder::Lowest;
 
 
 } // TopiaryRiffzModel
@@ -169,9 +172,52 @@ void TopiaryRiffzModel::setPatternLengthInMeasures(int i, int l)
 	// l: length of pattern in Measures
 	// i: pattern index
 	// called by setPatternLength
+
 	jassert((i < patternList.getNumItems()) && (i >= 0));
 
+	// check whether variations that use this pattern, now have pattern length inconsistencies
+	// and if so delete those noteAssignments
+
+	bool deassignNoteAssignments;
+
+	for (int v = 0; v < 8; v++)
+	{
+		deassignNoteAssignments = false;
+
+		// if there are no pattern assignements, then no problem, so only process if numItems > 0
+		if (variation[v].noteAssignmentList.numItems)
+		{
+			// pick first one as length of the variation
+			int variationLengthInMeasures = patternList.dataList[variation[v].noteAssignmentList.dataList[0].patternId].measures;
+			
+			// if this pattern is not length of variation, see if it is used in the variation and if so delete it
+			if (l != variationLengthInMeasures)
+			{
+				// loop over the noteAssignments
+				for (int na = 0; na < variation[v].noteAssignmentList.numItems; na++)
+				{
+					// is this assignment uses the pattern we are changing, delete it
+					if (variation[v].noteAssignmentList.dataList[na].patternId == i)
+					{
+						variation[v].noteAssignmentList.del(na);
+						deassignNoteAssignments = true;
+						na--;
+						redoPatternLookup(v);  
+					}
+				}  // loop over noteAssignments
+
+				if (deassignNoteAssignments)
+				{
+					redoPatternLookup(v);
+					Log("Pattern deassigned in variation " + String(v) + ".", Topiary::Warning);
+				}
+			}  // l >< variationLength
+		} // if numItems > 0
+	} // loop over variations
+
 	patternList.dataList[i].measures = l;
+
+	broadcaster.sendActionMessage(MsgVariationDefinition);  
 
 } // setPatternLengthInMeasures
 
@@ -195,31 +241,33 @@ void TopiaryRiffzModel::deletePattern(int deletePattern)
 	}
 
 	Log("Pattern "+String(deletePattern)+" deleted.", Topiary::LogType::Info);
-	jassert(false);
-	/*
-	// if there are variations that use this pattern, they need to be re-initialized (send in -1 in the initialize code)
-	for (int j = 0; j < 8; j++)
-	{
-		
-		//if (variation[j].patternToUse == deletePattern)
-		//	initializePatternToVariation(-1, j);
-	}
-			
-	broadcaster.sendActionMessage(MsgVariationEnables); // may need to disable the variation!
-
-	// if there are variations that use patterns higher than this one, lower their patternToUse by -1!
 	
-	for (int j = 0; j < 8; j++)
+	// if there are variations that use this pattern, those note assignments need to be removed
+	// any other noteAssignments need to be renumbered in terms of Id
+	// loop over all variations
+	bool deassigned = false;
+	for (int v = 0; v < 8; v++)
 	{
-		if (variation[j].patternToUse > (deletePattern))
+		// loop over all note assignments
+		for (int na = 0; na < variation[v].noteAssignmentList.numItems; na++)
 		{
-			variation[j].patternToUse--;
-		}
-	}
-	*/
+			// if the assignment uses this pattern; delete it
+			variation[v].noteAssignmentList.del(na);
+			deassigned = true;
+			/*
+			if (variation[v].noteAssignmentList.dataList[na].patternId == deletePattern)
+				variation[v].noteAssignmentList.del(na);
+			else // if the pattern's Id is higher than the deleted one, decrease by one
+				if (variation[v].noteAssignmentList.dataList[na].patternId > deletePattern)
+					variation[v].noteAssignmentList.dataList[na].patternId--;
+			*/
+		} // loop over all note assignments
+		redoPatternLookup(v);
+	} //loop over all variations
+			
+	broadcaster.sendActionMessage(MsgPatternList);
 	broadcaster.sendActionMessage(MsgVariationDefinition);  // something may have changed to the currently shown variation (it might be disabled)
 	
-
 } // deletePattern
 
 ///////////////////////////////////////////////////////////////////////
@@ -305,18 +353,24 @@ bool TopiaryRiffzModel::insertPatternFromFile(int patternIndex, bool overload)
 
 			bool deassigned = false;
 
-			// if any variations use this pattern, unassign them 
+			// if any key assignment in any variations use this pattern, unassign them 
 			for (int v = 0; v < 8; v++)
 			{
-				jassert(false);
-				/*
-				if (variation[v].patternToUse == patternIndex)
+				// loop over all note assignments
+				for (int na = 0; na < variation[v].noteAssignmentList.numItems; na++)
 				{
-					initializePatternToVariation(-1, v);
-					Log("Variation " + String(v + 1) + " deassigned from this pattern.", Topiary::LogType::Warning);
-					broadcaster.sendActionMessage(MsgWarning);  // warn the user in the header
+					// if the assignment uses this pattern; delete it
+					variation[v].noteAssignmentList.del(na);
 					deassigned = true;
-				}*/
+					/*
+					if (variation[v].noteAssignmentList.dataList[na].patternId == patternIndex)
+						variation[v].noteAssignmentList.del(na);
+					else // if the pattern's Id is higher than the deleted one, decrease by one
+						if (variation[v].noteAssignmentList.dataList[na].patternId > patternIndex)
+							variation[v].noteAssignmentList.dataList[na].patternId--;
+					*/
+				} // loop over all note assignments
+				redoPatternLookup(v);
 			}
 
 			if (deassigned)
@@ -334,20 +388,28 @@ bool TopiaryRiffzModel::insertPatternFromFile(int patternIndex, bool overload)
 
 } // insertPatternFromFile
 
+///////////////////////////////////////////////////////////////////////
+
 void TopiaryRiffzModel::setLatch(bool l)
 {
 	latch = l;
 }
+
+///////////////////////////////////////////////////////////////////////
 
 bool TopiaryRiffzModel::getLatch()
 {
 	return latch;
 }
 
+///////////////////////////////////////////////////////////////////////
+
 void TopiaryRiffzModel::setOutputChannel(int c)
 {
 	outputChannel = c;
 }
+
+///////////////////////////////////////////////////////////////////////
 
 int TopiaryRiffzModel::getOutputChannel()
 {
@@ -356,23 +418,42 @@ int TopiaryRiffzModel::getOutputChannel()
 
 void TopiaryRiffzModel::setNoteOrder(int n)
 {
-	noteOrder = n;
+	keytracker.noteOrder = n;
 }
+
+///////////////////////////////////////////////////////////////////////
 
 int TopiaryRiffzModel::getNoteOrder()
 {
-	return noteOrder;
+	return keytracker.noteOrder;
 }
+
+///////////////////////////////////////////////////////////////////////
+
 void TopiaryRiffzModel::setKeyRange(int f, int t)
 {
 	keyRangeFrom = f;
 	keyRangeTo = t;
+	// if there are any note assignments that are not in this range; give warnings
+	for (int v = 0; v < 8; v++)
+	{
+		// loop over all noteAssignments
+		for (int n = 0; n < variation[v].noteAssignmentList.numItems; n++)
+		{
+			int note = variation[v].noteAssignmentList.dataList[n].note;
+			if ((note>t)||(note<f))
+				Log("Variation "+String(v)+" Note "+ variation[v].noteAssignmentList.dataList[n].noteLabel+" assigned out of key range.", Topiary::Warning); 
+		}
+	}
+	
 }
+
+///////////////////////////////////////////////////////////////////////
 
 void TopiaryRiffzModel::getKeyRange(int& f, int& t)
 {
 	f = keyRangeFrom;
-	t = keyRangeTo;
+	t = keyRangeTo; 
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -629,6 +710,20 @@ void TopiaryRiffzModel::saveNoteAssignment(int v, int n, int o, int p)
 	// variation v, note n, offest o and patter numer p
 	// assumes all has been validated!
 
+	// make sure that all patterns in this variation have same length
+	
+	
+	int newPatLen = patternData[p].patLenInTicks;
+
+	for (int i = 0; i < variation[v].noteAssignmentList.getNumItems(); i++)
+	{
+		if (patternData[variation[v].noteAssignmentList.dataList[i].patternId ].patLenInTicks != newPatLen)
+		{
+			Log("All patterns in a varation must have same length.", Topiary::Warning);
+			return;
+		}
+	}
+
 	// check if this note already exists, if so, overwrite, if not make a new one
 	int noteExistsIndex = -1;
 	for (int i = 0; i < variation[v].noteAssignmentList.getNumItems(); i++)
@@ -654,6 +749,12 @@ void TopiaryRiffzModel::saveNoteAssignment(int v, int n, int o, int p)
 	variation[v].noteAssignmentList.dataList[noteExistsIndex].patternName = patternList.dataList[p].name;
 	redoPatternLookup(v);
 
+	// warn if assignment out of key range
+	if ((n<keyRangeFrom) ||(n>keyRangeTo))
+		Log("Note "+String(MidiMessage::getMidiNoteName(n, true, true, 5))+" assigned but out of key range.", Topiary::Warning);
+	
+	generateVariation(v, -1);
+
 	broadcaster.sendActionMessage(MsgNoteAssignment);
 	
 }
@@ -672,6 +773,7 @@ void TopiaryRiffzModel::getNoteAssignment(int v, int i, String& n, int& o, int& 
 void TopiaryRiffzModel::deleteNoteAssignment(int v, int i)
 {
 	variation[v].noteAssignmentList.del(i);
+	generateVariation(v, -1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -680,9 +782,9 @@ void TopiaryRiffzModel::generateVariation(int v, int measureToGenerate)
 {
 	// calls generateVaration(v, p, measureToGenerate) for each pattern
 	
-	for (int p = 0; p < MAXNOTEASSIGNMENTSPERVARIATION; p++)
-		if (variation[v].patternLookUp->patternInVariationId != -1)
-			generateVariation(v, variation[v].patternLookUp->patternInVariationId, measureToGenerate);
+	for (int p = 0; p < MAXPATTERNSINVARIATION; p++)
+		if (variation[v].patternLookUp[p].patternInVariationId != -1)
+			generateVariation(v, variation[v].patternLookUp[p].patternInVariationId, measureToGenerate);
 
 } // generateVariation
 
@@ -741,7 +843,7 @@ void TopiaryRiffzModel::generateVariation(int v, int p, int measureToGenerate)
 	// GENERATE NOTES & EVENTS
 	////////////////////////////
 	
-	Logger::outputDebugString("Generating notes & events");
+	Logger::outputDebugString("Generating notes & events variation " + String(v) + " pattern " + String(p) + ".");
 
 	Random randomizer;
 	
@@ -893,7 +995,7 @@ void TopiaryRiffzModel::generateVariation(int v, int p, int measureToGenerate)
 		else if (midiType == Topiary::CC)
 		{
 			var->dataList[vIndex].midiType = Topiary::CC;
-			var->dataList[vIndex].note = pat->dataList[pIndex].note;
+			var->dataList[vIndex].CC = pat->dataList[pIndex].length;
 			var->dataList[vIndex].value = pat->dataList[pIndex].value;
 		}
 		else if (midiType == Topiary::AfterTouch)
@@ -971,7 +1073,7 @@ void TopiaryRiffzModel::generateVariation(int v, int p, int measureToGenerate)
 					" len " + String(variation[v].pattern[p].dataList[j].length) +
 					" midiType " + String(variation[v].pattern[p].dataList[j].midiType));
 		else if (variation[v].pattern[p].dataList[j].midiType == Topiary::CC)
-			Logger::outputDebugString("<" + String(j) + "> <ID" + String(variation[v].pattern[p].dataList[j].ID) + "> CC: " + String(variation[v].pattern[p].dataList[j].note) +
+			Logger::outputDebugString("<" + String(j) + "> <ID" + String(variation[v].pattern[p].dataList[j].ID) + "> CC: " + String(variation[v].pattern[p].dataList[j].CC) +
 				" timestamp " + String(variation[v].pattern[p].dataList[j].timestamp) +
 				" value " + String(variation[v].pattern[p].dataList[j].value) );
 		else if (variation[v].pattern[p].dataList[j].midiType == Topiary::AfterTouch)
@@ -1008,9 +1110,13 @@ void TopiaryRiffzModel::regenerateVariationsForPattern(int p)
 	for (int v = 0; v < 8; v++)
 	{
 		if (variation[v].enabled)
-			for (int pat=0; pat< MAXNOTEASSIGNMENTSPERVARIATION; pat++)
+			for (int pat = 0; pat < MAXPATTERNSINVARIATION; pat++)
+			
 				if (variation[v].patternLookUp[pat].patternId == p)
-									generateVariation(v, variation[v].patternLookUp[pat].patternId, -1);
+				{
+					generateVariation(v, variation[v].patternLookUp[pat].patternId, -1);
+					pat = MAXPATTERNSINVARIATION;  // otherwise if the pattern is used multiple time, we regenerate multiple time - not needed
+				}
 	} 
 
 } // regenerateVariationsForPattern
@@ -1071,8 +1177,10 @@ void TopiaryRiffzModel::setPatternLength(int p, int l, bool keepTail)
 		setPatternLengthInMeasures(p, l);  
 		patternData[p].sortByTimestamp();
 
-		// regenerate variations using this pattern
-		regenerateVariationsForPattern(p);
+		// regenerate variations because we no longer know which variation used which pattern
+		for (int v = 0; v < 8; v++)
+			generateVariation(v, -1);
+
 		if (warned)
 			Log("Pattern was shortened and MIDI events were lost.", Topiary::LogType::Warning);
 		broadcaster.sendActionMessage(MsgPattern);
@@ -1174,14 +1282,45 @@ void TopiaryRiffzModel::getNote(int p, int ID, int& note, int &velocity, int &ti
 void TopiaryRiffzModel::deleteAllNotes(int p, int n)  // delete all notes equal to ID n from pattern
 {
 	// get note with id ID from pattern p
-	int note = patternData[p].dataList[n].note;
-
+	
+	int note = patternData[p].dataList[n-1].note;
+	int midiType = patternData[p].dataList[n-1].midiType;
 	for (int i=0; i<patternData[p].numItems; i++)
 	{
-		if (patternData[p].dataList[i].note == note) {
-			// delete the child
-			patternData[p].del(i);
-			i--;
+		switch (midiType)
+		{
+		case (Topiary::NoteOn):
+			if (patternData[p].dataList[i].note == note) 
+			{
+				// delete the child
+				patternData[p].del(i);
+				i--;
+			}
+			break;
+		case (Topiary::Pitch):
+			if (patternData[p].dataList[i].midiType == Topiary::Pitch) 
+			{
+				// delete the child
+				patternData[p].del(i);
+				i--;
+			}
+			break;
+		case (Topiary::CC):
+			if ((patternData[p].dataList[i].midiType == Topiary::CC)&&(patternData[p].dataList[i].note==note))
+			{
+				// delete the child
+				patternData[p].del(i);
+				i--;
+			}
+			break;
+		case (Topiary::AfterTouch):
+			if (patternData[p].dataList[i].midiType == Topiary::AfterTouch)
+			{
+				// delete the child
+				patternData[p].del(i);
+				i--;
+			}
+			break;
 		}
 	}
 
@@ -1526,8 +1665,49 @@ void TopiaryRiffzModel::outputNoteOff(int noteNumber)
 		MidiMessage msg = MidiMessage::noteOff(outputChannel, noteNumber, (float) 1.0);
 		modelEventBuffer.addEvent(msg, 0);
 	
-} // outputNoteOff
-
+} // outputNoteOff  
 ///////////////////////////////////////////////////////////////////////////////////////
+
+void TopiaryRiffzModel::maintainParentPattern()
+{
+	//global var parentPattern depends on the variation that is running and the note that is playing.
+	
+	// look up the note
+	auto noteList = &(variation[variationRunning].noteAssignmentList);
+	int notePlaying = keytracker.notePlaying;
+
+	jassert(notePlaying != -1);
+
+	int noteIndex = -1;
+	for (int i = 0; i < noteList->getNumItems(); i++) 
+		if (noteList->dataList[i].note == notePlaying)
+		{
+			noteIndex = i;
+			i = noteList->getNumItems();
+		}
+
+	if (noteIndex == -1)
+	{
+		// note is not assigned anything - we let stuff run as is
+		//if (!parentPattern) jassert(false);
+		return;
+	}
+
+	// now we look at the pattern for this note - this is the pattern in the source patternlist
+	int patternIndex = noteList->dataList[noteIndex].patternId;
+
+	// now look up which pattern in the variation this is
+	for (int i = 0; i < MAXPATTERNSINVARIATION; i++)
+		if (variation[variationRunning].patternLookUp[i].patternId == patternIndex)
+		{
+			int vindex = variation[variationRunning].patternLookUp[i].patternInVariationId;
+			parentPattern = &(variation[variationRunning].pattern[vindex]);
+			return;
+		}
+
+	jassert(false);
+}  // maintainParentPattern;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "../../Topiary/Source/Components/TopiaryMidiLearnEditor.cpp.h"

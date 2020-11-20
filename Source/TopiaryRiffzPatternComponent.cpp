@@ -134,11 +134,11 @@ void TopiaryRiffzPatternComponent::actionListenerCallback(const String &message)
 			this->setEnabled(true);
 			if (patternCombo.getNumItems() > rememberPatternComboSelection)
 			{
-				patternCombo.setSelectedItemIndex(rememberPatternComboSelection);
+				patternCombo.setSelectedId(rememberPatternComboSelection+1);
 			}
 			else
 			{
-				patternCombo.setSelectedItemIndex(0);
+				patternCombo.setSelectedId(1);
 			}
 
 			//actionListenerCallback(MsgPattern);  // force reload of patterndata
@@ -154,7 +154,7 @@ void TopiaryRiffzPatternComponent::actionListenerCallback(const String &message)
 } // actionListenerCallback
 
 /////////////////////////////////////////////////////////////////////////
-
+ 
 void TopiaryRiffzPatternComponent::setPatternLength()
 {
 	// validate the input

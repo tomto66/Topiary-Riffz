@@ -44,7 +44,7 @@ TopiaryRiffzMasterComponent::TopiaryRiffzMasterComponent()
 		riffzModel->insertPatternFromFile(selection, false); // false means make new pattern
 		
 		riffzModel->sendActionMessage(MsgPatternList); // tables resort the data!
-	};
+	}; 
 
 	// Duplicate Pattern button
 	duplicatePatternButton.setSize(buttonW, buttonH);
@@ -218,14 +218,19 @@ void TopiaryRiffzMasterComponent::setSettings()
 	// validate edits to note range
 	int from = 0; 
 	int to = 127;
+	auto oldFromT = settingComponent.keyRangeFromEditor.getText();
+	auto oldToT = settingComponent.keyRangeToEditor.getText();
 	int oldFrom, oldTo;
 
 	riffzModel->getKeyRange(oldFrom, oldTo);
 
 	String note=validateNote(settingComponent.keyRangeFromEditor.getText());
 	from = validNoteNumber(note);
+	settingComponent.keyRangeFromEditor.setText(note);
+
 	note = validateNote(settingComponent.keyRangeToEditor.getText());
 	to = validNoteNumber(note);
+	settingComponent.keyRangeToEditor.setText(note);
 
 	if (from > to)
 	{

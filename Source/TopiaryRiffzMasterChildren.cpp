@@ -97,10 +97,12 @@ SettingComponent::SettingComponent()
 	noteOrderCombo.setSize(100, buttonH);
 	addAndMakeVisible(noteOrderCombo);
 	noteOrderCombo.setSize(100, buttonH);
-	noteOrderCombo.addItem("Lowest", TopiaryRiffzModel::NoteOrder::Lowest);
-	noteOrderCombo.addItem("Highest", TopiaryRiffzModel::NoteOrder::Highest);
+	noteOrderCombo.addItem("Lowest", TopiaryKeytracker::NoteOrder::Lowest);
+	noteOrderCombo.addItem("Highest", TopiaryKeytracker::NoteOrder::Highest);
+	noteOrderCombo.addItem("First", TopiaryKeytracker::NoteOrder::First);
+	noteOrderCombo.addItem("Last", TopiaryKeytracker::NoteOrder::Last);
 	
-	quantizeRunStopCombo.onChange = [this]
+	noteOrderCombo.onChange = [this]
 	{
 		parent->setSettings();
 	};
