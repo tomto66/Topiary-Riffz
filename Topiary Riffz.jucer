@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="so1YrE" name="Topiary Riffz" projectType="audioplug" version="0.7.0"
+              companyName="Topiary" pluginManufacturer="Topiary" pluginVSTCategory="kPlugCategGenerator"
+              pluginManufacturerCode="Beat" pluginCode="Beat" pluginCharacteristicsValue="pluginIsMidiEffectPlugin,pluginIsSynth,pluginProducesMidiOut,pluginWantsMidiIn"
+              splashScreenColour="Light" pluginFormats="buildStandalone,buildVST"
+              jucerFormatVersion="1">
+  <MAINGROUP id="MiVGXn" name="Topiary Riffz">
+    <FILE id="hl9N7e" name="TopiaryPatternList.cpp.h" compile="0" resource="0"
+          file="../Topiary/Source/Model/TopiaryPatternList.cpp.h"/>
+    <FILE id="fhYXCK" name="TopiaryKeytracker.cpp" compile="1" resource="0"
+          file="../Topiary/Source/Model/TopiaryKeytracker.cpp"/>
+    <FILE id="SPGDDC" name="TopiaryKeytracker.h" compile="0" resource="0"
+          file="../Topiary/Source/Model/TopiaryKeytracker.h"/>
+    <FILE id="dLANOD" name="PluginEditor.cpp.h" compile="0" resource="0"
+          file="../Topiary/Source/Plugin/PluginEditor.cpp.h"/>
+    <FILE id="NY4WNY" name="PluginEditor.h" compile="0" resource="0" file="../Topiary/Source/Plugin/PluginEditor.h"/>
+    <FILE id="KmOlYF" name="PluginProcessor.cpp.h" compile="0" resource="0"
+          file="../Topiary/Source/Plugin/PluginProcessor.cpp.h"/>
+    <FILE id="sitdbK" name="PluginProcessor.h" compile="0" resource="0"
+          file="../Topiary/Source/Plugin/PluginProcessor.h"/>
+    <FILE id="Krwgcc" name="LoadMidiPattern.cpp.h" compile="0" resource="0"
+          file="../Topiary/Source/Model/LoadMidiPattern.cpp.h"/>
+    <FILE id="ORfJUF" name="TopiaryListModel.cpp" compile="1" resource="0"
+          file="../Topiary/Source/Model/TopiaryListModel.cpp"/>
+    <FILE id="V2vBMO" name="TopiaryListModel.h" compile="0" resource="0"
+          file="../Topiary/Source/Model/TopiaryListModel.h"/>
+    <FILE id="SEG7Ev" name="TopiaryModel.cpp" compile="1" resource="0"
+          file="../Topiary/Source/Model/TopiaryModel.cpp"/>
+    <FILE id="zDVx4A" name="TopiaryModel.cpp.h" compile="0" resource="0"
+          file="../Topiary/Source/Model/TopiaryModel.cpp.h"/>
+    <FILE id="lau5Q9" name="TopiaryModel.h" compile="0" resource="0" file="../Topiary/Source/Model/TopiaryModel.h"/>
+    <FILE id="NaApXo" name="TopiaryNoteOffBuffer.cpp" compile="1" resource="0"
+          file="../Topiary/Source/Model/TopiaryNoteOffBuffer.cpp"/>
+    <FILE id="EsdFvb" name="TopiaryNoteOffBuffer.h" compile="0" resource="0"
+          file="../Topiary/Source/Model/TopiaryNoteOffBuffer.h"/>
+    <FILE id="by66Dz" name="TopiaryPattern.cpp.h" compile="0" resource="0"
+          file="../Topiary/Source/Model/TopiaryPattern.cpp.h"/>
+    <FILE id="t9cxt5" name="TopiaryPattern.h" compile="0" resource="0"
+          file="../Topiary/Source/Model/TopiaryPattern.h"/>
+    <FILE id="Y4ymBr" name="TopiaryPatternList.h" compile="0" resource="0"
+          file="../Topiary/Source/Model/TopiaryPatternList.h"/>
+    <FILE id="TgaF0E" name="TopiaryVariation.cpp.h" compile="0" resource="0"
+          file="../Topiary/Source/Model/TopiaryVariation.cpp.h"/>
+    <FILE id="lXWuoA" name="TopiaryVariation.h" compile="0" resource="0"
+          file="../Topiary/Source/Model/TopiaryVariation.h"/>
+    <FILE id="sDtWB3" name="TopiaryLogComponent.cpp.h" compile="0" resource="0"
+          file="../Topiary/Source/Components/TopiaryLogComponent.cpp.h"/>
+    <FILE id="J4tSZC" name="TopiaryLogComponent.h" compile="0" resource="0"
+          file="../Topiary/Source/Components/TopiaryLogComponent.h"/>
+    <FILE id="oG0iAZ" name="TopiaryMidiLearnEditor.cpp.h" compile="0" resource="0"
+          file="../Topiary/Source/Components/TopiaryMidiLearnEditor.cpp.h"/>
+    <FILE id="FaKvYG" name="TopiaryMidiLearnEditor.h" compile="0" resource="0"
+          file="../Topiary/Source/Components/TopiaryMidiLearnEditor.h"/>
+    <FILE id="M9i5IR" name="TopiaryTable.cpp" compile="1" resource="0"
+          file="../Topiary/Source/Components/TopiaryTable.cpp"/>
+    <FILE id="PeRmT4" name="TopiaryTable.h" compile="0" resource="0" file="../Topiary/Source/Components/TopiaryTable.h"/>
+    <FILE id="F8hIuY" name="TopiaryTransportComponent.cpp.h" compile="0"
+          resource="0" file="../Topiary/Source/Components/TopiaryTransportComponent.cpp.h"/>
+    <FILE id="vumAcu" name="TopiaryTransportComponent.h" compile="0" resource="0"
+          file="../Topiary/Source/Components/TopiaryTransportComponent.h"/>
+    <FILE id="WYtXH3" name="TopiaryUtilityComponent.cpp.h" compile="0"
+          resource="0" file="../Topiary/Source/Components/TopiaryUtilityComponent.cpp.h"/>
+    <FILE id="OvoBjW" name="TopiaryUtilityComponent.h" compile="0" resource="0"
+          file="../Topiary/Source/Components/TopiaryUtilityComponent.h"/>
+    <FILE id="hr78rz" name="TopiaryVariationButtonsComponent.cpp.h" compile="0"
+          resource="0" file="../Topiary/Source/Components/TopiaryVariationButtonsComponent.cpp.h"/>
+    <FILE id="ICQGsc" name="TopiaryVariationButtonsComponent.h" compile="0"
+          resource="0" file="../Topiary/Source/Components/TopiaryVariationButtonsComponent.h"/>
+    <FILE id="DlXKNX" name="topiaryRiffzLogo -75.png" compile="0" resource="1"
+          file="Resources/topiaryRiffzLogo -75.png"/>
+    <FILE id="VPivn9" name="Topiary.cpp" compile="1" resource="0" file="../Topiary/Source/Topiary.cpp"/>
+    <FILE id="UAuPFW" name="Topiary.h" compile="0" resource="0" file="../Topiary/Source/Topiary.h"/>
+    <GROUP id="{D5BC8FF7-D48D-665F-7CA5-E964EDAA0535}" name="Source">
+      <FILE id="O6RXu3" name="Build.h" compile="0" resource="0" file="Source/Build.h"/>
+      <FILE id="hcMkaz" name="TopiaryVariationChildren.cpp.h" compile="0"
+            resource="0" file="../Topiary/Source/Components/TopiaryVariationChildren.cpp.h"/>
+      <FILE id="apyftd" name="TopiaryVariationChildren.h" compile="0" resource="0"
+            file="../Topiary/Source/Components/TopiaryVariationChildren.h"/>
+      <FILE id="A8p0Mi" name="NoteAssignmentList.cpp" compile="1" resource="0"
+            file="Source/NoteAssignmentList.cpp"/>
+      <FILE id="ki3oD3" name="NoteAssignmentList.h" compile="0" resource="0"
+            file="Source/NoteAssignmentList.h"/>
+      <FILE id="dCXLi5" name="TopiaryRiffzVariation.cpp" compile="1" resource="0"
+            file="Source/TopiaryRiffzVariation.cpp"/>
+      <FILE id="yobriP" name="TopiaryRiffzVariation.h" compile="0" resource="0"
+            file="Source/TopiaryRiffzVariation.h"/>
+      <FILE id="cMeGz1" name="TopiaryRiffz.h" compile="0" resource="0" file="Source/TopiaryRiffz.h"/>
+      <FILE id="E6lh7x" name="TopiaryRiffzMasterChildren.cpp" compile="1"
+            resource="0" file="Source/TopiaryRiffzMasterChildren.cpp"/>
+      <FILE id="zpPBNA" name="TopiaryRiffzMasterChildren.h" compile="0" resource="0"
+            file="Source/TopiaryRiffzMasterChildren.h"/>
+      <FILE id="FjsesC" name="TopiaryRiffzPatternChildren.cpp" compile="1"
+            resource="0" file="Source/TopiaryRiffzPatternChildren.cpp"/>
+      <FILE id="z0bx38" name="TopiaryRiffzPatternChildren.h" compile="0"
+            resource="0" file="Source/TopiaryRiffzPatternChildren.h"/>
+      <FILE id="EnOyB9" name="TopiaryRiffzPatternComponent.cpp" compile="1"
+            resource="0" file="Source/TopiaryRiffzPatternComponent.cpp"/>
+      <FILE id="QbKqJT" name="TopiaryRiffzPatternComponent.h" compile="0"
+            resource="0" file="Source/TopiaryRiffzPatternComponent.h"/>
+      <FILE id="C9EFqL" name="TopiaryRiffzUtilityComponent.cpp" compile="1"
+            resource="0" file="Source/TopiaryRiffzUtilityComponent.cpp"/>
+      <FILE id="hnNmVz" name="TopiaryRiffzUtilityComponent.h" compile="0"
+            resource="0" file="Source/TopiaryRiffzUtilityComponent.h"/>
+      <FILE id="enh8aq" name="TopiaryRiffzVariationChildren.cpp" compile="1"
+            resource="0" file="Source/TopiaryRiffzVariationChildren.cpp"/>
+      <FILE id="v2NnI0" name="TopiaryRiffzVariationComponent.cpp" compile="1"
+            resource="0" file="Source/TopiaryRiffzVariationComponent.cpp"/>
+      <FILE id="kORVe9" name="TopiaryRiffzVariationComponent.h" compile="0"
+            resource="0" file="Source/TopiaryRiffzVariationComponent.h"/>
+      <FILE id="xhqjmO" name="RiffzPluginProcessor.cpp" compile="1" resource="0"
+            file="Source/RiffzPluginProcessor.cpp"/>
+      <FILE id="fuukxd" name="RiffzPluginProcessor.h" compile="0" resource="0"
+            file="Source/RiffzPluginProcessor.h"/>
+      <FILE id="Fq1A3d" name="RiffzPluginEditor.cpp" compile="1" resource="0"
+            file="Source/RiffzPluginEditor.cpp"/>
+      <FILE id="OTAOIy" name="TopiaryRiffzComponent.cpp" compile="1" resource="0"
+            file="Source/TopiaryRiffzComponent.cpp"/>
+      <FILE id="VajC7n" name="TopiaryRiffzComponent.h" compile="0" resource="0"
+            file="Source/TopiaryRiffzComponent.h"/>
+      <FILE id="U2hHVC" name="TopiaryRiffzHeaderComponent.cpp" compile="1"
+            resource="0" file="Source/TopiaryRiffzHeaderComponent.cpp"/>
+      <FILE id="i7zDaJ" name="TopiaryRiffzHeaderComponent.h" compile="0"
+            resource="0" file="Source/TopiaryRiffzHeaderComponent.h"/>
+      <FILE id="t80Ogt" name="TopiaryRiffzMasterComponent.cpp" compile="1"
+            resource="0" file="Source/TopiaryRiffzMasterComponent.cpp"/>
+      <FILE id="vDDfgE" name="TopiaryRiffzMasterComponent.h" compile="0"
+            resource="0" file="Source/TopiaryRiffzMasterComponent.h"/>
+      <FILE id="Vhn8tz" name="TopiaryRiffzModel.cpp" compile="1" resource="0"
+            file="Source/TopiaryRiffzModel.cpp"/>
+      <FILE id="zfHCUu" name="TopiaryRiffzModel.h" compile="0" resource="0"
+            file="Source/TopiaryRiffzModel.h"/>
+      <FILE id="MNQ5A2" name="TopiaryRiffzTabbedComponent.cpp" compile="1"
+            resource="0" file="Source/TopiaryRiffzTabbedComponent.cpp"/>
+      <FILE id="AzK1Bj" name="TopiaryRiffzTabbedComponent.h" compile="0"
+            resource="0" file="Source/TopiaryRiffzTabbedComponent.h"/>
+      <FILE id="hJSeCt" name="TopiaryRiffzTransportComponent.cpp" compile="1"
+            resource="0" file="Source/TopiaryRiffzTransportComponent.cpp"/>
+      <FILE id="kIELoy" name="TopiaryRiffzTransportComponent.h" compile="0"
+            resource="0" file="Source/TopiaryRiffzTransportComponent.h"/>
+      <FILE id="Osa66f" name="TopiaryRiffzVariationButtonsComponent.cpp"
+            compile="1" resource="0" file="Source/TopiaryRiffzVariationButtonsComponent.cpp"/>
+      <FILE id="Gnkb1p" name="TopiaryRiffzLogComponent.cpp" compile="1" resource="0"
+            file="Source/TopiaryRiffzLogComponent.cpp"/>
+      <FILE id="BkzwMk" name="TopiaryRiffzVariationChildren.h" compile="0"
+            resource="0" file="Source/TopiaryRiffzVariationChildren.h"/>
+      <FILE id="ItuBam" name="TopiaryRiffzLogComponent.h" compile="0" resource="0"
+            file="Source/TopiaryRiffzLogComponent.h"/>
+      <FILE id="QEZLwq" name="TopiaryRiffzVariationButtonsComponent.h" compile="0"
+            resource="0" file="Source/TopiaryRiffzVariationButtonsComponent.h"/>
+      <FILE id="h7GfMZ" name="RiffzPluginEditor.h" compile="0" resource="0"
+            file="Source/RiffzPluginEditor.h"/>
+    </GROUP>
+  </MAINGROUP>
+  <EXPORTFORMATS>
+    <VS2019 targetFolder="Builds/VisualStudio2019">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" prebuildCommand="&quot;c:\development\Topiary Riffz\source\build.bat&quot; "/>
+        <CONFIGURATION isDebug="0" name="Release" prebuildCommand="&quot;c:\development\Topiary Riffz\source\build.bat&quot; "/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_opengl"/>
+        <MODULEPATH id="juce_gui_extra"/>
+        <MODULEPATH id="juce_gui_basics"/>
+        <MODULEPATH id="juce_graphics"/>
+        <MODULEPATH id="juce_events"/>
+        <MODULEPATH id="juce_data_structures"/>
+        <MODULEPATH id="juce_core"/>
+        <MODULEPATH id="juce_audio_utils"/>
+        <MODULEPATH id="juce_audio_processors"/>
+        <MODULEPATH id="juce_audio_plugin_client"/>
+        <MODULEPATH id="juce_audio_formats"/>
+        <MODULEPATH id="juce_audio_devices"/>
+        <MODULEPATH id="juce_audio_basics"/>
+      </MODULEPATHS>
+    </VS2019>
+  </EXPORTFORMATS>
+  <MODULES>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_plugin_client" showAllCode="1" useLocalCopy="0"
+            useGlobalPath="0"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_opengl" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+  </MODULES>
+  <LIVE_SETTINGS>
+    <WINDOWS/>
+  </LIVE_SETTINGS>
+  <JUCEOPTIONS/>
+</JUCERPROJECT>
