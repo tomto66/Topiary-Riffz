@@ -1,4 +1,4 @@
-# Topiary Riffz 0.7.0
+# Topiary Riffz 0.8.0
 
 Topiary Riffz is a plugin to assign midi patterns to keys, and potentially transpose these patterns.
 
