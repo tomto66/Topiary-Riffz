@@ -290,9 +290,9 @@ void NoteAssignmentList::selectedRowsChanged(int lastRowSelected)
 
 int NoteAssignmentList::findOffset(int note)
 {
-	// loop over all noteAssignments till you find this note, return 0 if nothing found
+	// loop over all noteAssignments till you find this note, return -1 if nothing found
 	
-	int offset = 0;
+	int offset = Topiary::NoNoteAssigned; 
 	for (int i=0; i<numItems;i++)
 		if (dataList[i].note == note)
 		{

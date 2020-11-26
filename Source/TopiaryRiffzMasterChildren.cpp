@@ -40,13 +40,31 @@ SettingComponent::SettingComponent()
 
 	// WFFNButton
 
-	latchButton.setClickingTogglesState(true);
-	latchButton.setLookAndFeel(&topiaryLookAndFeel);
-	latchButton.setSize(100, buttonH);
-	addAndMakeVisible(latchButton);
-	latchButton.setButtonText("Latch");
-	latchButton.onClick = [this]
+	latch1Button.setClickingTogglesState(true);
+	latch1Button.setLookAndFeel(&topiaryLookAndFeel);
+	latch1Button.setSize(45, buttonH);
+	addAndMakeVisible(latch1Button);
+	latch1Button.setButtonText("Latch1");
+	
+	latch1Button.onClick = [this]
 	{
+		if (latch1Button.getToggleState())
+			latch2Button.setToggleState(false, dontSendNotification);
+
+		parent->setSettings();
+	};
+
+	latch2Button.setClickingTogglesState(true);
+	latch2Button.setLookAndFeel(&topiaryLookAndFeel);
+	latch2Button.setSize(45, buttonH);
+	
+	addAndMakeVisible(latch2Button);
+	latch2Button.setButtonText("Latch2");
+	latch2Button.onClick = [this]
+	{
+		if (latch2Button.getToggleState())
+			latch1Button.setToggleState(false, dontSendNotification);
+
 		parent->setSettings();
 	};
 
@@ -226,8 +244,13 @@ void SettingComponent::paint(Graphics& g)
 	notePassThroughButton.setBounds(componentBounds);
 
 	lineBounds.removeFromLeft(10);
-	componentBounds = lineBounds.removeFromLeft(100);
-	latchButton.setBounds(componentBounds);
+	componentBounds = lineBounds.removeFromLeft(45);
+	latch1Button.setBounds(componentBounds);
+
+	lineBounds.removeFromLeft(10);
+	componentBounds = lineBounds.removeFromLeft(45);
+	latch2Button.setBounds(componentBounds);
+
 
 	// second line
 

@@ -37,7 +37,8 @@ public:
 	TextButton saveButton;
 	TextButton loadButton;
 	TextEditor nameEditor;
-	TopiaryButton latchButton;
+	TopiaryButton latch1Button;
+	TopiaryButton latch2Button;
 	TextEditor outputChannelEditor;
 	TopiaryMidiLearnEditor keyRangeFromEditor, keyRangeToEditor;
 	

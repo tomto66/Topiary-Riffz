@@ -56,8 +56,7 @@ void TopiaryModel::savePreset(String msg, String extension)
 		filePath = f.getParentDirectory().getFullPathName();
 		f = myChooser.getResult();
 		addParametersToModel();  // this adds all data as XML elements to model
-		//String myXmlDoc = model->createDocument(String());
-		String myXmlDoc = model->toString();
+		String myXmlDoc = model->createDocument(String());
 		f.replaceWithText(myXmlDoc);
 		//Logger::writeToLog(myXmlDoc);
 
@@ -324,11 +323,6 @@ void TopiaryModel::logMidi(bool in, MidiMessage &msg)
 		{
 			if (msg.isController())
 				Log("CC out Controller: " + String(msg.getControllerNumber()) + ": " + String(msg.getControllerValue()) + " channel: " + String(msg.getChannel()) + ".", Topiary::LogType::MidiOut);
-			else if (msg.isPitchWheel())
-				Log("Pitch out: " + String(msg.getPitchWheelValue()) + " channel: " + String(msg.getChannel()) + ".", Topiary::LogType::MidiOut);
-			else if (msg.isChannelPressure())
-					Log("AT out: " + String(msg.getChannelPressureValue()) + " channel: " + String(msg.getChannel()) + ".", Topiary::LogType::MidiOut);
-
 		}
 	}
 
@@ -390,9 +384,7 @@ void TopiaryModel::setBPM(int n)
 
 void TopiaryModel::setRunState(int n)
 {
-	UNUSED(n);
 	jassert(false);
-	/*
 	// only call with false when called from generateMidi - because there we already have the lock!
 
 	int remember;
@@ -498,7 +490,7 @@ void TopiaryModel::setRunState(int n)
 	// now the first waiting variation might stil be orange; fix that below
 	if (remember == Topiary::Armed)
 		setVariation(variationSelected);
-*/
+
 } // setRunState
 
 ///////////////////////////////////////////////////////////////////////
@@ -632,20 +624,20 @@ void TopiaryModel::outputModelEvents(MidiBuffer& buffer)
 {	
 	// outputs what is in modelEventBuffer
 	MidiMessage msg;
+	int position;
 	const GenericScopedLock<CriticalSection> myScopedLock(lockModel);
 
-	//auto iterator = MidiBuffer::Iterator(modelEventBuffer);
-	//while (iterator.getNextEvent(msg, position))
-	for (const MidiMessageMetadata metadata : modelEventBuffer)
+	auto iterator = MidiBuffer::Iterator(modelEventBuffer);
+
+	while (iterator.getNextEvent(msg, position))
 	{
-		msg = metadata.getMessage();
 		buffer.addEvent(msg, 0);
 	}
 
 	modelEventBuffer.clear();
 
 }  // outputModelEvents
- 
+
 ///////////////////////////////////////////////////////////////////////
 
 void TopiaryModel::outputVariationEvents()
@@ -726,7 +718,7 @@ bool TopiaryModel::processEnding() // called just before generateMidi - to see i
 	if (cursorToStop < (blockCursor + blockSize))
 	{
 		cursorToStop = -1;
-		setRunState(Topiary::Stopped); 
+		setRunState(Topiary::Stopped);
 		return true;
 	}
 	else return false;

@@ -102,7 +102,7 @@ int TopiaryListModel::getColumnIndexByName(String name)
 } // getColumnNameByIndex
 
 /////////////////////////////////////////////////////////////////////////////
-  
+
 int TopiaryListModel::getNumItems()
 {
 	return numItems;

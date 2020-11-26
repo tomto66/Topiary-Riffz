@@ -142,8 +142,9 @@ void TopiaryRiffzVariationComponent::getVariationDefinition()
 	if (variation != -1 && !getVariationCalledFromChangeInVariationButton)  // because otherwise the variation is already set in the editor
 			riffzModel->setVariation(variation); // so that the variation buttons follow
 
-		// make sure the noteassignment table is linked to the variation selected
+	// make sure the noteassignment table is linked to the variation selected
 	noteAssignmentComponent.noteAssignmentTable.setModel(riffzModel->getNoteAssignment(variation));
+	noteAssignmentComponent.noteAssignmentTable.selectRow(0);
 
 	if (variation <0 ) return;  // this should never happen, except when initializing
 
@@ -395,6 +396,7 @@ void TopiaryRiffzVariationComponent::actionListenerCallback(const String &messag
 	{
 		getVariationDefinition();  
 		// be sure that the mastertables are read first so the patternCombo is set correctly !!!
+
 	}
 	else if (message.compare(MsgPatternList) == 0)
 	{
@@ -440,6 +442,9 @@ void TopiaryRiffzVariationComponent::actionListenerCallback(const String &messag
 			getVariationCalledFromChangeInVariationButton = true;
 			getVariationDefinition();
 			getVariationCalledFromChangeInVariationButton = false;
+			// make sure the table is updated
+			noteAssignmentComponent.noteAssignmentTable.setModel(riffzModel->getNoteAssignment(newVariation));
+			noteAssignmentComponent.noteAssignmentTable.selectRow(-1);
 			UNUSED(unused)
 		}
 	}

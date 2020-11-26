@@ -139,8 +139,8 @@ void TopiaryAudioProcessor::changeProgramName(int index, const String& newName)
 } // changeProgramName
 
 /////////////////////////////////////////////////////////////////////////
- 
-void TopiaryAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) 
+
+void TopiaryAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 { 
 	ignoreUnused(samplesPerBlock);
 	model.setSampleRate(sampleRate);
@@ -240,10 +240,8 @@ void TopiaryAudioProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer&
 
 	if (!waitFFN && (runState == Topiary::Armed))
 	{
+		
 		tellModelToRun();
-#ifdef RIFFZ
-		model.maintainParentPattern();
-#endif
 		runState = Topiary::Running;
 	}
 
@@ -256,44 +254,31 @@ void TopiaryAudioProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer&
 	// first see if there are (CC) messages to be output by the model
 	model.outputModelEvents(processedMidi);
 
-	//for (MidiBuffer::Iterator it(midiMessages); it.getNextEvent(msg, ignore);)
-	for (const MidiMessageMetadata metadata : midiMessages)
+	int ignore;  // for the samplePosition in getnextEvent - we ignore that c'se we process immeditately
+	for (MidiBuffer::Iterator it(midiMessages); it.getNextEvent(msg, ignore);)
 	{
-		msg = metadata.getMessage();
-		
+	
 		if (msg.isNoteOn())
 		{
 			if (!model.midiLearn(msg)) {
 				// if we are ready to play and waiting for first note in, start playing
 				if (waitFFN && (runState == Topiary::Armed))
 				{
-
 					tellModelToRun();
 					runState = Topiary::Running;
 				}
 
-#ifdef RIFFZ
-				if (runState == Topiary::Running) 
-				{
-					int note = msg.getNoteNumber();
-					if ((model.keyRangeFrom <= note) && (model.keyRangeTo >= note))
-					{
-						model.keytracker.push(note);
-					}
-				}
-#endif
-				
 				model.processAutomation(msg); // because we may have switching by notes
+
+#ifdef RIFFZ
+				model.keytrack(msg.getNoteNumber());
+#endif
 			}
 		}
-		else if (msg.isNoteOff())
-		{
 #ifdef RIFFZ
-			if (runState == Topiary::Running)
-				model.keytracker.pop(msg.getNoteNumber());
+		else if (msg.isNoteOff())
+			model.keytracker.pop(msg.getNoteNumber());
 #endif
-
-		}
 		else
 		{
 			if (msg.isController())
@@ -314,17 +299,16 @@ void TopiaryAudioProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer&
 						runState = Topiary::Ending;
 						break;
 					case juce::MidiMessage::mmc_play:
-						if (runState != Topiary::Running)
-							if (waitFFN)
-							{
-								model.setRunState(Topiary::Armed);
-								runState = Topiary::Armed;
-							}
-							else
-							{
-								model.setRunState(Topiary::Running);
-								runState = Topiary::Running;
-							}
+						if (waitFFN)
+						{
+							model.setRunState(Topiary::Armed);
+							runState = Topiary::Armed;
+						}
+						else
+						{
+							model.setRunState(Topiary::Running);
+							runState = Topiary::Running;
+						}
 						break;
 					case juce::MidiMessage::mmc_deferredplay:
 						break;
@@ -380,7 +364,6 @@ void TopiaryAudioProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer&
 			{
 			}
 		}
-
 	}
 
 	if (runState == Topiary::Ending)
@@ -391,9 +374,9 @@ void TopiaryAudioProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer&
 		}
 	}
 
+	//Logger::outputDebugString(String(">>>>>>>>>>>>>>>>>>>Processor ready to run Running ") + String((int)runState));
+
 	// always call generateMidi - even though we are note Running and not Ending, there may be noteOff events to process
-
-
 
 	model.generateMidi(&processedMidi, &midiMessages); // midiMessages might contain data to record; 
 	

@@ -74,7 +74,7 @@ public:
 
 	TOPIARYMODEL* getModel();
 
-private: 
+private:
 	TOPIARYMODEL model;	// do this first!!!
 	MidiBuffer processedMidi;
 

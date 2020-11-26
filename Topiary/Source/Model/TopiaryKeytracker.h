@@ -24,7 +24,7 @@ along with Topiary. If not, see <https://www.gnu.org/licenses/>.
 #define KEYTRACKERBUFFER 512
 
 class TopiaryKeytracker
-{
+{ 
 
 public:
 	TopiaryKeytracker();
@@ -41,6 +41,7 @@ public:
 	int noteOrder= First;
 	int notePlaying = -1;		// note that is generating output
 	int nextNotePlaying = -1;	// if <> notePlaying, next one to use to generate output
+	int lastNotePlaying = -1;
 	int bufferSize = 0;
 
 	void push(int note);
@@ -72,8 +73,8 @@ private:
 			break;
 			 
 		case Last: 
-			if (keys[bufferSize] != notePlaying)
-				nextNotePlaying = keys[bufferSize];
+			if (keys[bufferSize-1] != notePlaying)
+				nextNotePlaying = keys[bufferSize-1];
 
 			break;
 
@@ -90,7 +91,7 @@ private:
 			break;
 
 		case Highest:
-			// find lowest note
+			// find highest note
 			
 			for (int i = 0; i < bufferSize; i++)
 				if (keys[i] > highest)
@@ -104,8 +105,7 @@ private:
 			jassert(false);
 		} // switch
 
-		//if (notePlaying == -1) 
-		//	notePlaying = nextNotePlaying;
+		
 	}
 
 }; // TopiaryKeytracker

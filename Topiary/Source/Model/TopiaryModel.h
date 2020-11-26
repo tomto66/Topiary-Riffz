@@ -125,7 +125,6 @@ public:
 #define MsgSelectedNoteAssignmentRowsChanged "N"
 #define MsgNoteAssignment "A" // signal that note assignment table changed
 
-	 
 	////////// Utility
 
 	void setVariationControl(bool ccSwitching, int channel, int switches[8]);

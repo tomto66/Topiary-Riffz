@@ -67,8 +67,8 @@ public:
 
 	void deleteAllNotes(int p, int n);  // deletes all occurrence of note n (id of event) in the pattern
 
-	void setLatch(bool l);
-	bool getLatch(); 
+	void setLatch(bool l1, bool l2);
+	void getLatch(bool &l1, bool &l2); 
 	void setOutputChannel(int c);
 	int getOutputChannel();
 	void getKeyRange(int& f, int& t);
@@ -95,7 +95,7 @@ public:
 	void setVariation(int i) override;
 	void getVariation(int& running, int& selected);
 	void getVariationEnables(bool enables[8]);
-	bool getVariationEnabled(int v);
+	bool getVariationEnabled(int v); 
 	int getVariationLenInTicks(int v);
 
 	void getVariationDefinition(int i, bool& enabled, String& vname, int& type);   // pass variation Definition on to VariationComponent in editor
@@ -128,6 +128,8 @@ public:
 
 	void setOverrideHostTransport(bool o) override;
 	void setNumeratorDenominator(int nu, int de) override;
+
+	void keytrack(int note);
 
 	struct PatternLookUp
 	{
@@ -205,6 +207,10 @@ public:
 	int keyRangeTo = 127;
 #define NUMBEROFQUANTIZERS 10
 
+	bool latch1 = true;		// keep playing last note
+	bool latch2 = false;    // different latch, does run End when no key pressed and then re-arms
+	bool latch2Restart = false;
+
 private:
 	TopiaryPatternList patternList;
 	TopiaryPattern patternData[MAXNOPATTERNS];
@@ -212,7 +218,6 @@ private:
 	TopiaryNoteOffBuffer noteOffBuffer;
 	
 	int outputChannel = 1;		// output of plugin
-	bool latch = true;		// keep playing last note
 	
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////
@@ -314,7 +319,8 @@ private:
 		addToModel(parameters, variationStartQ, "variationStartQ");
 		addToModel(parameters, WFFN, "WFFN");
 		addToModel(parameters, name, "name");
-		addToModel(parameters, latch, "latch");
+		addToModel(parameters, latch1, "latch");		
+		addToModel(parameters, latch2, "latch2");
 		addToModel(parameters, outputChannel, "outputChannel");
 		addToModel(parameters, keyRangeFrom, "keyRangeFrom");
 		addToModel(parameters, keyRangeTo, "keyRangeTo");
@@ -436,7 +442,8 @@ private:
 
 						else if (parameterName.compare("keyRangeFrom") == 0) keyRangeFrom = parameter->getIntAttribute("Value");
 						else if (parameterName.compare("keyRangeTo") == 0) keyRangeTo = parameter->getIntAttribute("Value");
-						else if (parameterName.compare("latch") == 0) latch = parameter->getBoolAttribute("Value");
+						else if (parameterName.compare("latch") == 0) latch1 = parameter->getBoolAttribute("Value");
+						else if (parameterName.compare("latch2") == 0) latch2 = parameter->getBoolAttribute("Value");
 						else if (parameterName.compare("outputChannel") == 0)outputChannel = parameter->getIntAttribute("Value");
 
 						else if (parameterName.compare("WFFN") == 0)	WFFN = parameter->getBoolAttribute("Value");

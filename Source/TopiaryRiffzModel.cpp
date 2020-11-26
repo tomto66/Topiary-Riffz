@@ -390,16 +390,18 @@ bool TopiaryRiffzModel::insertPatternFromFile(int patternIndex, bool overload)
 
 ///////////////////////////////////////////////////////////////////////
 
-void TopiaryRiffzModel::setLatch(bool l)
+void TopiaryRiffzModel::setLatch(bool l1, bool l2)
 {
-	latch = l;
+	latch1 = l1;
+	latch2 = l2;
 }
 
 ///////////////////////////////////////////////////////////////////////
 
-bool TopiaryRiffzModel::getLatch()
+void TopiaryRiffzModel::getLatch(bool &l1, bool &l2)
 {
-	return latch;
+	l1 = latch1;
+	l2 = latch2;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -778,33 +780,42 @@ void TopiaryRiffzModel::deleteNoteAssignment(int v, int i)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TopiaryRiffzModel::generateVariation(int v, int measureToGenerate)
+void TopiaryRiffzModel::generateVariation(int v, int eightToGenerate)
 {
 	// calls generateVaration(v, p, measureToGenerate) for each pattern
 	
 	for (int p = 0; p < MAXPATTERNSINVARIATION; p++)
 		if (variation[v].patternLookUp[p].patternInVariationId != -1)
-			generateVariation(v, variation[v].patternLookUp[p].patternInVariationId, measureToGenerate);
+			generateVariation(v, variation[v].patternLookUp[p].patternInVariationId, eightToGenerate);
 
 } // generateVariation
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TopiaryRiffzModel::generateVariation(int v, int p, int measureToGenerate)
+void TopiaryRiffzModel::generateVariation(int v, int p, int eightToGenerate)
 {
 	// (re)generates variation[v].pattern[p]
 
 	jassert((v < 8) && (v >= 0));
+	int tickFrom = -1;
+	int tickTo = -1;
 
 	if (!variation[v].enabled)
 		return;
 
-	if (measureToGenerate == -1)
+	if (eightToGenerate == -1)
 	{
 		// meaning we regererate the lot
 		// reset numItems
 		variation[v].pattern[p].numItems = 0;
 	}
+	else
+	{
+		// set tickFrom and tickTo based on eightToGenerate
+		tickFrom = eightToGenerate * Topiary::TicksPerQuarter / 2;
+		tickTo = tickFrom + Topiary::TicksPerQuarter / 2;
+	}
+
 
 	// set every event in the variation to miditype::NOP
 
@@ -814,7 +825,7 @@ void TopiaryRiffzModel::generateVariation(int v, int p, int measureToGenerate)
 	int patternToUse = 	findPatternInVariation(v, p);  
 
 	TopiaryPattern* pat = &(patternData[patternToUse]);
-	if (measureToGenerate == -1)
+	if (eightToGenerate == -1)
 	{
 		// make sure it's initialized properly - only done from editor or @ load
 		var->numItems = pat->numItems;
@@ -822,20 +833,18 @@ void TopiaryRiffzModel::generateVariation(int v, int p, int measureToGenerate)
 		{
 			var->dataList[j].ID = j + 1;
 			var->dataList[j].timestamp = pat->dataList[j].timestamp;
-			int measre = pat->dataList[v].timestamp % (numerator * Topiary::TicksPerQuarter);
-			if ((measre == measureToGenerate) || (measureToGenerate == -1))
-				var->dataList[j].midiType = Topiary::MidiType::NOP;
+			//int measre = pat->dataList[v].timestamp % (numerator * Topiary::TicksPerQuarter);
+			var->dataList[j].midiType = Topiary::MidiType::NOP;
 		}
 
 	}
-	else if (measureToGenerate == patternList.dataList[patternToUse].measures) // we ran over end of pattern
-		measureToGenerate = 0;
-
+	//else if (measureToGenerate == patternList.dataList[patternToUse].measures) // we ran over end of pattern
+	//	measureToGenerate = 0;
 
 	for (int j = 0; j < pat->numItems; j++)
 	{
-		int measre = (int) pat->dataList[j].timestamp / (numerator * Topiary::TicksPerQuarter);
-		if ((measre == measureToGenerate) || (measureToGenerate == -1))
+		//int measre = (int) pat->dataList[j].timestamp / (numerator * Topiary::TicksPerQuarter);
+		if ( ((var->dataList[j].timestamp >=tickFrom) && (var->dataList[j].timestamp < tickTo)) || (eightToGenerate == -1) )
 			var->dataList[j].midiType = Topiary::MidiType::NOP;
 	}
 
@@ -855,7 +864,8 @@ void TopiaryRiffzModel::generateVariation(int v, int p, int measureToGenerate)
 	
 	for (int pIndex = 0; pIndex < pat->numItems; pIndex++)
 	{
-		if (((*pat).dataList[pIndex].measure == measureToGenerate) || (measureToGenerate == -1))
+		//if (((*pat).dataList[pIndex].measure == measureToGenerate) || (measureToGenerate == -1))
+		if ( (((*pat).dataList[pIndex].timestamp >= tickFrom) && ((*pat).dataList[pIndex].timestamp < tickTo)) || (eightToGenerate == -1)  )
 		{
 			bool doNote = true;
 			vIndex = var->findID(pIndex + 1);
@@ -1030,6 +1040,9 @@ void TopiaryRiffzModel::generateVariation(int v, int p, int measureToGenerate)
 						//int debug = direction * rnd * Topiary::TicksPerQuarter * variation[v].timingValue /100;
 						timestamp = timestamp + (int)(direction * rnd * Topiary::TicksPerQuarter * variation[v].timingValue / 800);
 						if (timestamp < 0) timestamp = 0;
+						if (eightToGenerate != -1) // make sure we do not loose a note due to too early
+							if (timestamp < tickFrom)
+								timestamp = tickFrom;
 
 						if (timestamp > (var->patLenInTicks - 1)) timestamp = var->patLenInTicks - 1; // lenInTicks -1 because we need time for the note off event
 						var->dataList[vIndex].timestamp = timestamp;
@@ -1071,6 +1084,7 @@ void TopiaryRiffzModel::generateVariation(int v, int p, int measureToGenerate)
 				Logger::outputDebugString("<" + String(j) + "> <ID" + String(variation[v].pattern[p].dataList[j].ID)+"> Note: " + String(variation[v].pattern[p].dataList[j].note) + 
 					" timestamp " + String(variation[v].pattern[p].dataList[j].timestamp) + 
 					" len " + String(variation[v].pattern[p].dataList[j].length) +
+					" velo " + String(variation[v].pattern[p].dataList[j].velocity) +
 					" midiType " + String(variation[v].pattern[p].dataList[j].midiType));
 		else if (variation[v].pattern[p].dataList[j].midiType == Topiary::CC)
 			Logger::outputDebugString("<" + String(j) + "> <ID" + String(variation[v].pattern[p].dataList[j].ID) + "> CC: " + String(variation[v].pattern[p].dataList[j].CC) +
@@ -1471,25 +1485,6 @@ bool TopiaryRiffzModel::midiLearn(MidiMessage m)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
-void TopiaryRiffzModel::record(bool b)
-{
-	// set the recording state (does not record = recording happens in the processor!
-	
-	const GenericScopedLock<CriticalSection> myScopedLock(lockModel);
-
-	if (b) {
-	}
-	else if (recordingMidi)
-		processMidiRecording();
-
-	recordingMidi = b;
-	// inform transport
-	broadcaster.sendActionMessage(MsgTransport);
-	
-} // record
-
-///////////////////////////////////////////////////////////////////////////////////////
-
 void TopiaryRiffzModel::processMidiRecording()
 {
 	// process recorded events and add to pattern
@@ -1675,8 +1670,19 @@ void TopiaryRiffzModel::maintainParentPattern()
 	// look up the note
 	auto noteList = &(variation[variationRunning].noteAssignmentList);
 	int notePlaying = keytracker.notePlaying;
+	if (notePlaying == -1)
+	{
+		// check if we are latching, and if so, use lastNotePlayed
+		if (latch1 || latch2)
+			notePlaying = keytracker.lastNotePlaying;
+	}
 
-	jassert(notePlaying != -1);
+	if (notePlaying == -1) 
+	{
+		// should only happen when switching variations and note previously assigned now is not
+		parentPattern = nullptr;
+		return; // parentpattern should be nullptr or else it was what it was
+	}
 
 	int noteIndex = -1;
 	for (int i = 0; i < noteList->getNumItems(); i++) 
@@ -1709,5 +1715,31 @@ void TopiaryRiffzModel::maintainParentPattern()
 }  // maintainParentPattern;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
+
+void TopiaryRiffzModel::record(bool b)
+{
+	// set the recording state (does not record = recording happens in the processor!
+	UNUSED(b)
+
+} // record
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+void TopiaryRiffzModel::keytrack(int note)
+{
+	// only pass the note into keytracker if it has been assigned in the current variation
+	bool assigned = false;
+
+	for (int n=0; n< variation[variationRunning].noteAssignmentList.numItems; n++)
+		if (variation[variationRunning].noteAssignmentList.dataList[n].note == note)
+		{
+			assigned = true;
+			n = 10000;
+		}
+	if (assigned)
+		keytracker.push(note);
+
+} // keytrack
+
 
 #include "../../Topiary/Source/Components/TopiaryMidiLearnEditor.cpp.h"

@@ -109,8 +109,10 @@ private:
 		settingComponent.quantizeRunStopCombo.setSelectedId(riffzModel->getRunStopQ(), dontSendNotification);
 		settingComponent.switchVariationCombo.setSelectedId(riffzModel->getSwitchVariation(), dontSendNotification);
 		settingComponent.noteOrderCombo.setSelectedId(riffzModel->getNoteOrder(), dontSendNotification);
-
-		settingComponent.latchButton.setToggleState(riffzModel->getLatch(), dontSendNotification);
+		bool l1, l2;
+		riffzModel->getLatch(l1, l2);
+		settingComponent.latch1Button.setToggleState(l1, dontSendNotification);
+		settingComponent.latch2Button.setToggleState(l2, dontSendNotification);
 		settingComponent.outputChannelEditor.setText(String(riffzModel->getOutputChannel()), dontSendNotification);
 
 		int from, to;

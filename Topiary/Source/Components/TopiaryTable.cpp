@@ -150,7 +150,11 @@ Component* TopiaryTable::refreshComponentForCell(int rowNumber, int columnId, bo
 		if (columnId != 1)
 		{
 			const auto& columnName = tableComponent.getHeader().getColumnName(columnId);
-			
+			//see if this column is editable
+			//auto columnDefinition = columnList->getChildByAttribute("name", columnName);
+			//auto columnDefinition = model->headerList[columnId - 1].name;
+
+			//auto editable = columnDefinition->getStringAttribute("editable");
 			int colNumber = model->getColumnIndexByName(columnName);  
 			auto editable = model->headerList[colNumber].editable;
 
@@ -278,7 +282,7 @@ String TopiaryTable::setText(const int columnNumber, const int rowNumber, const 
 		dataList->getChildElement(rowNumber)->setAttribute("Note", noteNumber);
 		model->setIntByIndex(rowNumber, columnIndex, noteNumber);
 	}
-	else 
+	else
 	{
 		validatedText = newText;
 		model->setStringByIndex(rowNumber, columnIndex, newText);
@@ -293,7 +297,6 @@ String TopiaryTable::setText(const int columnNumber, const int rowNumber, const 
 		int remember = tableComponent.getSelectedRow(0);
 		//model->fillDataList(dataList);	// update contents
 		updateContent();
-		selectRow(-1);
 		selectRow(remember);
 	}
 
@@ -323,13 +326,16 @@ void TopiaryTable::setPattern(int p)
 {
 	// set pattern index
 	pattern = p;
-
-} // setPattern;
+}
 
 //////////////////////////////////////////////////////////////////////////////////////
 
 void TopiaryTable::selectedRowsChanged(int lastRowSelected)
 {
-	model->selectedRowsChanged(lastRowSelected);
+	// depending on what we find in the table headers, call the model to do something
+	// for now we only want to detect that in riffzmodel for keyAssignments
 
-} // selectedRowsChanged
+	// loop over the headers and see if we can detect "offset" - in that case call model->keyassignmentchange (or something)
+	// + define dummy keyassignmentchange in topiarymodel
+	model->selectedRowsChanged(lastRowSelected);
+}

@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 /*
-This file is part of Topiary, Copyright Tom Tollenaere 2018-2020.
+This file is part of Topiary, Copyright Tom Tollenaere 2018-2020. 
 
 Topiary is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -161,6 +161,7 @@ class Topiary
 
 	static const int TicksPerQuarter = 240;
 	static const int ToDeleteID = 999999999;
+	static const int NoNoteAssigned = -99999;
 private:
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Topiary)

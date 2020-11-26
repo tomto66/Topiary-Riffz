@@ -214,7 +214,7 @@ void TopiaryRiffzMasterComponent::setSettings()
 	riffzModel->setNoteOrder(settingComponent.noteOrderCombo.getSelectedId());
 	riffzModel->setName(settingComponent.nameEditor.getText());
 	riffzModel->setSwitchVariation(settingComponent.switchVariationCombo.getSelectedId());
-	riffzModel->setLatch(settingComponent.latchButton.getToggleState());
+	riffzModel->setLatch(settingComponent.latch1Button.getToggleState(), settingComponent.latch2Button.getToggleState());
 	// validate edits to note range
 	int from = 0; 
 	int to = 127;

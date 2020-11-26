@@ -80,9 +80,9 @@ bool loadMidiPattern(const File& fileToRead, int patternIndex, int& measures, in
 
 		if (numTracks >1)
 			Log("Multiple tracks ("+String(numTracks)+") in input file; result may be unexpected!" , Topiary::LogType::Warning);
-		 
+
 		for (int t = 0; t < numTracks; t++) {
-			auto sequence = midifile.getTrack(t); 
+			auto sequence = midifile.getTrack(t);
 			Logger::writeToLog(String("Track " + String(t)));
 			timeStampMeasure = 0; // in case of empty tracks!!!
 
@@ -103,8 +103,6 @@ bool loadMidiPattern(const File& fileToRead, int patternIndex, int& measures, in
 					patternData[patternIndex].dataList[index].note = message.getNoteNumber();
 					patternData[patternIndex].dataList[index].velocity = message.getVelocity();
 					patternData[patternIndex].dataList[index].label = MidiMessage::getMidiNoteName(message.getNoteNumber(), true, true, 5);
-					patternData[patternIndex].dataList[index].midiType = Topiary::NoteOn;
-
 					// calculate start markers
 					// duration will follow @noteoff event
 
@@ -144,7 +142,7 @@ bool loadMidiPattern(const File& fileToRead, int patternIndex, int& measures, in
 					if (index>=0)
 						patternData[patternIndex].dataList[index].length = (int)floor(timeStamp) - patternData[patternIndex].dataList[index].timestamp;
 
-				}  // end isNoteOff
+				}
 				if (message.isMetaEvent())
 				{
 					if (message.isTempoMetaEvent())
@@ -159,104 +157,10 @@ bool loadMidiPattern(const File& fileToRead, int patternIndex, int& measures, in
 						message.getTimeSignatureInfo(num, den);
 						//Logger::writeToLog(String("SIGNATURE META EVENT: " + String(num) + String("/") + String(den)));
 					}
-				} // end isMetaEvent
-#ifdef RIFFZ
-				if (message.isController())
-				{
-					// do not store all notes off
-					if (message.getControllerNumber() == 123) break;
-					patternData[patternIndex].add();
-					index = patternData[patternIndex].numItems - 1;
-					patternData[patternIndex].dataList[index].midiType = Topiary::CC;
-					patternData[patternIndex].dataList[index].ID = noteCounter + 1;
-					patternData[patternIndex].dataList[index].note = message.getControllerNumber();
-					patternData[patternIndex].dataList[index].velocity = 0;
-					patternData[patternIndex].dataList[index].value = message.getControllerValue();
-					patternData[patternIndex].dataList[index].label = "";
-
-					// calculate start markers
-					// duration will follow @noteoff event
-
-					double timeStamp = message.getTimeStamp();
-					// recalculate timeStamp to our reference range
-					timeStamp = timeStamp * Topiary::TicksPerQuarter / ticksPerQuarter;
-					lenInTicks = (int)timeStamp; // passed on to caller
-					patternData[patternIndex].dataList[index].timestamp = (int)floor(timeStamp);
-					timeStampMeasure = (int)floor(timeStamp / (num * Topiary::TicksPerQuarter));
-					timeStamp = timeStamp - (timeStampMeasure * num * Topiary::TicksPerQuarter);
-					int timeStampBeat = (int)floor(timeStamp / Topiary::TicksPerQuarter);
-					timeStamp = timeStamp - (timeStampBeat * Topiary::TicksPerQuarter);
-					int timeStampTicks = (int)timeStamp;
-					patternData[patternIndex].dataList[index].measure = timeStampMeasure;
-					patternData[patternIndex].dataList[index].beat = timeStampBeat;
-					patternData[patternIndex].dataList[index].tick = timeStampTicks;
-					noteCounter++;
-				} // isController
-
-				if (message.isChannelPressure())
-				{
-					patternData[patternIndex].add();
-					index = patternData[patternIndex].numItems - 1;
-					patternData[patternIndex].dataList[index].midiType = Topiary::AfterTouch;
-					patternData[patternIndex].dataList[index].ID = noteCounter + 1;
-					patternData[patternIndex].dataList[index].note = -1;
-					patternData[patternIndex].dataList[index].velocity = 0;
-					patternData[patternIndex].dataList[index].value = message.getChannelPressureValue();
-					patternData[patternIndex].dataList[index].label = "";
-
-					// calculate start markers
-					// duration will follow @noteoff event
-
-					double timeStamp = message.getTimeStamp();
-					// recalculate timeStamp to our reference range
-					timeStamp = timeStamp * Topiary::TicksPerQuarter / ticksPerQuarter;
-					lenInTicks = (int)timeStamp; // passed on to caller
-					patternData[patternIndex].dataList[index].timestamp = (int)floor(timeStamp);
-					timeStampMeasure = (int)floor(timeStamp / (num * Topiary::TicksPerQuarter));
-					timeStamp = timeStamp - (timeStampMeasure * num * Topiary::TicksPerQuarter);
-					int timeStampBeat = (int)floor(timeStamp / Topiary::TicksPerQuarter);
-					timeStamp = timeStamp - (timeStampBeat * Topiary::TicksPerQuarter);
-					int timeStampTicks = (int)timeStamp;
-					patternData[patternIndex].dataList[index].measure = timeStampMeasure;
-					patternData[patternIndex].dataList[index].beat = timeStampBeat;
-					patternData[patternIndex].dataList[index].tick = timeStampTicks;
-					noteCounter++;
-				} // isAfterTouch
-
-				if (message.isPitchWheel())
-				{
-					patternData[patternIndex].add();
-					index = patternData[patternIndex].numItems - 1;
-					patternData[patternIndex].dataList[index].midiType = Topiary::Pitch;
-					patternData[patternIndex].dataList[index].ID = noteCounter + 1;
-					patternData[patternIndex].dataList[index].note = -1;
-					patternData[patternIndex].dataList[index].velocity = 0;
-					patternData[patternIndex].dataList[index].value = message.getPitchWheelValue();
-					patternData[patternIndex].dataList[index].label = "";
-
-					// calculate start markers
-					// duration will follow @noteoff event
-
-					double timeStamp = message.getTimeStamp();
-					// recalculate timeStamp to our reference range
-					timeStamp = timeStamp * Topiary::TicksPerQuarter / ticksPerQuarter;
-					lenInTicks = (int)timeStamp; // passed on to caller
-					patternData[patternIndex].dataList[index].timestamp = (int)floor(timeStamp);
-					timeStampMeasure = (int)floor(timeStamp / (num * Topiary::TicksPerQuarter));
-					timeStamp = timeStamp - (timeStampMeasure * num * Topiary::TicksPerQuarter);
-					int timeStampBeat = (int)floor(timeStamp / Topiary::TicksPerQuarter);
-					timeStamp = timeStamp - (timeStampBeat * Topiary::TicksPerQuarter);
-					int timeStampTicks = (int)timeStamp;
-					patternData[patternIndex].dataList[index].measure = timeStampMeasure;
-					patternData[patternIndex].dataList[index].beat = timeStampBeat;
-					patternData[patternIndex].dataList[index].tick = timeStampTicks;
-					noteCounter++;
-				} // isPitchWheel
-#endif
-
+				}
 			} // loop over events
 
-			// careful - we may have empty tracks!!
+			// careful - we may have empty tracks11
 			if (timeStampMeasure > (measures))
 			{
 				measures = timeStampMeasure; // because that gets passed on to  caller !! and we do +1 at the end!
