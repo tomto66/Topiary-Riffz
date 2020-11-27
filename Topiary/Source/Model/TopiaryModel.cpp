@@ -56,7 +56,7 @@ void TopiaryModel::savePreset(String msg, String extension)
 		filePath = f.getParentDirectory().getFullPathName();
 		f = myChooser.getResult();
 		addParametersToModel();  // this adds all data as XML elements to model
-		String myXmlDoc = model->createDocument(String());
+		String myXmlDoc = model->toString();
 		f.replaceWithText(myXmlDoc);
 		//Logger::writeToLog(myXmlDoc);
 
@@ -624,13 +624,12 @@ void TopiaryModel::outputModelEvents(MidiBuffer& buffer)
 {	
 	// outputs what is in modelEventBuffer
 	MidiMessage msg;
-	int position;
+	
 	const GenericScopedLock<CriticalSection> myScopedLock(lockModel);
 
-	auto iterator = MidiBuffer::Iterator(modelEventBuffer);
-
-	while (iterator.getNextEvent(msg, position))
+	for (const MidiMessageMetadata metadata : modelEventBuffer)
 	{
+		msg = metadata.getMessage();
 		buffer.addEvent(msg, 0);
 	}
 

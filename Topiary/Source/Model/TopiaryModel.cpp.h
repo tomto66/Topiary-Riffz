@@ -461,44 +461,27 @@ bool TOPIARYMODEL::processVariationSwitch() // called just before generateMidi -
 			// so decide where in the variation we start - we need to set patternCursor
 
 			processStartQ();
-			/*
-			patternCursor = (int)floor(blockCursor / samplesPerTick) % getVariationLenInTicks(variationSelected);
-
-			switch (switchVariation)
-			{
-			case (Topiary::SwitchFromStart):
-				patternCursorOffset = patternCursor;
-				//Logger::outputDebugString("PatternCursorOffset in PROCESSVARIATIONSWITCH: " + String(patternCursorOffset));
-				//Logger::outputDebugString("Blockcursor ; " + String(blockCursor));
-				break;
-			case (Topiary::SwitchWithinBeat):
-				patternCursorOffset = 0;
-				patternCursor = patternCursor % Topiary::TicksPerQuarter;
-				break;
-			case (Topiary::SwitchWithinMeasure):
-				patternCursorOffset = 0;
-				patternCursor = patternCursor % (Topiary::TicksPerQuarter * numerator);
-				break;
-			case (Topiary::SwitchWithinPattern):
-				patternCursorOffset = 0;
-				patternCursor = patternCursor % (getVariationLenInTicks(variationSelected));
-				break;
-			}
-			*/
+			
 			Log(String("Switch from variation ") + String(variationRunning) + String(" to ") + String(variationSelected), Topiary::LogType::Variations);
 			variationRunning = variationSelected;
-
-#ifdef RIFFZ
-			maintainParentPattern();
-#endif
 
 			if (variation[variationRunning].type == Topiary::VariationTypeSteady)
 				previousSteadyVariation = variationRunning;
 
 			broadcaster.sendActionMessage(MsgVariationSelected);
+#ifdef RIFFZ
+			cursorToStop = -1;  // so that in case of a pattern latching to end, the endpoint calculation gets reset
+			keytracker.lastNotePlaying = -1;
+			if ((keytracker.notePlaying != keytracker.nextNotePlaying) && (!latch1))
+				keytracker.notePlaying = keytracker.nextNotePlaying;
+			maintainParentPattern();
+			
+#endif
+			
 		} // if variation switch
 
 #ifdef RIFFZ
+		
 		// check if we have a noteswitch and hence pattern switch
 
 		if (latch2 && (keytracker.notePlaying != keytracker.nextNotePlaying) && (cursorToStop != -1) && (keytracker.nextNotePlaying != -1))
@@ -529,9 +512,7 @@ bool TOPIARYMODEL::processVariationSwitch() // called just before generateMidi -
 					cursorToStop = -1; // because we may 'restart' a pattern that was still 'ending' so ignore previous value of cursortostop
 				}
 			}
-			//else if (latch2 && keytracker.nextNotePlaying == -1)
-			//{
-			//}
+			
 				
 			else if (keytracker.lastNotePlaying != -1)
 			{
@@ -871,10 +852,7 @@ void TOPIARYMODEL::generateMidi(MidiBuffer* midiBuffer, MidiBuffer* recBuffer)
 					else if (runState == Topiary::Ending)
 					{
 						setRunState(Topiary::TransportRunState::Stopped); 
-#ifdef RIFFZ
-						//if (latch2)   YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
-						//	setRunState(Topiary::TransportRunState::Armed);
-#endif
+
 						//Log("Ended ---------------------------------------", Topiary::LogType::Variations);
 						rtCursor = rtCursorTo; // prevent next if to pass so nothing further is generated
 					}
@@ -889,30 +867,7 @@ void TOPIARYMODEL::generateMidi(MidiBuffer* midiBuffer, MidiBuffer* recBuffer)
 					//Logger::outputDebugString(String("Next Patcursor ") + String(nextPatternCursor));
 
 					////// GENERATE MIDI EVENT
-					int midiType = parentPattern->dataList[noteChild].midiType;
-
-					/* OLD GENERATE PATTERN LOGIC
-					int pMeasure = (int)floor(parentPattern->dataList[noteChild].timestamp / (numerator * Topiary::TicksPerQuarter));
-					
-					if (pMeasure != previousMeasure)
-					{					
-#ifndef PRESETZ
-						if (!recordingMidi) // because we do not want to lose the recorded notes!
-						{
-							if (previousMeasure == -1)
-								generateVariation(variationRunning, 0); // make sure we do the first one, always !!!
-							else
-								generateVariation(variationRunning, pMeasure + 1); // the others we do one ahead to preven early notes from dropping
-
-							// DO WE NEED TO WALK HERE - I THINK WE CAN AVOID IT !!!! 
-							noteChild = 0;
-							walkToTick(parentPattern, noteChild, patternCursor);
-							midiType = parentPattern->dataList[noteChild].midiType;
-						}
-#endif
-						previousMeasure = pMeasure;
-						
-					} ***********************************/
+					int midiType = parentPattern->dataList[noteChild].midiType;		
 
 					if ((variation[variationRunning].type == Topiary::VariationTypeFill) && (variationRunning == variationSelected))
 					{
@@ -984,14 +939,7 @@ void TOPIARYMODEL::generateMidi(MidiBuffer* midiBuffer, MidiBuffer* recBuffer)
 						}
 						else if (midiType == Topiary::MidiType::NoteOff)
 							msg = MidiMessage::noteOff(channel, noteNumber, (juce::uint8)0);
-						/*
-						else if (midiType == Topiary::MidiType::CC)
-							msg = MidiMessage::controllerEvent(channel, noteNumber, parentPattern->dataList[noteChild].value);  // noteNumber is also CC number
-						else if (midiType == Topiary::MidiType::AfterTouch)
-							msg = MidiMessage::channelPressureChange(channel, value);
-						else if (midiType == Topiary::MidiType::Pitch)
-							msg = MidiMessage::pitchWheel(channel, value);
-						*/
+						
 
 						// DEBUG LOGIC !!!!!!!!!
 						// outputting the pattern tick values + the tick value in the generated pattern

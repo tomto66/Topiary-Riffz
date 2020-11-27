@@ -254,10 +254,9 @@ void TopiaryAudioProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer&
 	// first see if there are (CC) messages to be output by the model
 	model.outputModelEvents(processedMidi);
 
-	int ignore;  // for the samplePosition in getnextEvent - we ignore that c'se we process immeditately
-	for (MidiBuffer::Iterator it(midiMessages); it.getNextEvent(msg, ignore);)
+	for (const MidiMessageMetadata metadata : midiMessages)
 	{
-	
+		msg = metadata.getMessage();
 		if (msg.isNoteOn())
 		{
 			if (!model.midiLearn(msg)) {
