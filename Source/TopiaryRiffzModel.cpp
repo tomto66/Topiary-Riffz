@@ -39,6 +39,19 @@ void TopiaryRiffzModel::restoreStateFromMemoryBlock(const void* data, int sizeIn
 	model = AudioProcessor::getXmlFromBinary(data, sizeInBytes);
 	restoreParametersToModel();
 	
+	// Initialisations for automation, otherwise automation may overwrite these!
+
+	prevRndNoteOccurrence = -1;
+	prevBoolNoteOccurrence = -1;
+	prevSwingAmount = -101;
+	prevBoolSwing = -1;
+	prevRndVelocity = -1;
+	prevBoolVelocity = -1;
+	prevRndNoteLength = -1;
+	prevBoolNoteLength = -1;
+	prevRndTiming = -1;
+	prevBoolTiming = -1;
+
 
 }
 
@@ -140,7 +153,6 @@ TopiaryRiffzModel::TopiaryRiffzModel()
 
 	overrideHostTransport = true;
 	keytracker.noteOrder = TopiaryKeytracker::NoteOrder::Lowest;
-
 
 } // TopiaryRiffzModel
 
@@ -535,6 +547,7 @@ bool TopiaryRiffzModel::validateVariationDefinition(int i, String vname)
 	// if patternId == -1 check if it was -1 in the model; if so give is a pass; otherwise complain that pattern needs to be selected
 
 	jassert(i < 8); // goes from 0-7
+	UNUSED(i)
 
 	if (getNumPatterns() == 0) return false;  // in this case the variations tab should be disabled anyway
 
@@ -556,6 +569,8 @@ bool TopiaryRiffzModel::validateVariationDefinition(int i, String vname)
 void TopiaryRiffzModel::setRandomizeNotes(int v, bool enable, int value)
 {
 	variation[v].randomizeNotes = enable;
+	prevBoolNoteOccurrence = enable;
+	*boolNoteOccurrence = enable;
 	variation[v].randomizeNotesValue = value;
 	
 	generateVariation(v, -1);
@@ -567,6 +582,7 @@ void TopiaryRiffzModel::setRandomizeNotes(int v, bool enable, int value)
 void TopiaryRiffzModel::getRandomizeNotes(int v, bool &enable, int &value)
 {
 	enable = variation[v].randomizeNotes;
+	*boolNoteOccurrence = enable;
 	value = variation[v].randomizeNotesValue;
 	
 } // setRandomNotes
@@ -576,6 +592,8 @@ void TopiaryRiffzModel::getRandomizeNotes(int v, bool &enable, int &value)
 void TopiaryRiffzModel::setRandomizeLength(int v, bool enable, int value, bool plus, bool min)
 {
 	variation[v].randomizeLength = enable;
+	prevBoolNoteLength = enable;
+	*boolNoteLength = enable;
 	variation[v].lengthValue = value;
 	variation[v].lengthPlus = plus;
 	variation[v].lengthMin = min;
@@ -588,6 +606,9 @@ void TopiaryRiffzModel::setRandomizeLength(int v, bool enable, int value, bool p
 void TopiaryRiffzModel::getRandomizeLength(int v, bool& enable, int& value, bool& plus, bool& min)
 {
 	enable = variation[v].randomizeLength;
+	prevBoolNoteLength = enable;
+	*boolNoteLength = enable;
+
 	value = variation[v].lengthValue;
 	plus = variation[v].lengthPlus;
 	min = variation[v].lengthMin;
@@ -599,6 +620,8 @@ void TopiaryRiffzModel::getRandomizeLength(int v, bool& enable, int& value, bool
 void TopiaryRiffzModel::setSwing(int v, bool enable, int value)
 {
 	variation[v].swing = enable;
+	prevBoolSwing = enable;
+	*boolSwing = enable;
 	variation[v].swingValue = value;
 	generateVariation(v, -1);
 
@@ -618,6 +641,8 @@ void TopiaryRiffzModel::getSwing(int v, bool &enable, int &value)
 void TopiaryRiffzModel::setRandomizeVelocity(int v, bool enable, int value, bool plus, bool min)
 {
 	variation[v].randomizeVelocity = enable;
+	prevBoolVelocity = enable;
+	*boolVelocity = enable;
 	variation[v].velocityValue = value;
 	variation[v].velocityPlus = plus;
 	variation[v].velocityMin = min;	
@@ -642,6 +667,8 @@ void TopiaryRiffzModel::getRandomizeVelocity(int v, bool &enable, int &value, bo
 void TopiaryRiffzModel::setRandomizeTiming(int v, bool enable, int value, bool plus, bool min)
 {
 	variation[v].randomizeTiming = enable;
+	prevBoolTiming = enable;
+	*boolTiming = enable;
 	variation[v].timingValue = value;
 	variation[v].timingPlus = plus;
 	variation[v].timingMin = min;
@@ -1487,79 +1514,9 @@ bool TopiaryRiffzModel::midiLearn(MidiMessage m)
 
 void TopiaryRiffzModel::processMidiRecording()
 {
-	// process recorded events and add to pattern
-	
-	// loop over the variation and look for IDs == -1
 	
 	jassert(false);
-	/*
-	int loopLen = variation[variationSelected].pattern.numItems; 
-	int patPos; // where to inser the new events
-	TopiaryPattern* pat = &(patternData[variation[variationSelected].patternToUse]);
-	TopiaryVariation *var = &(variation[variationSelected].pattern);
-	for (int v=0; v < loopLen; v++)
-	{
-		if (variation[variationSelected].pattern.dataList[v].length == -1)
-		{
-			if (var->dataList[v].midiType == Topiary::MidiType::NoteOn)
-			{
-				patPos = pat->numItems;
-				pat->add();
-
-				//newChild = new XmlElement("INSERTED");  // the RECDATA elements will get inserted in the pattern when recording done; use tag insertes do we van find the note off for it
-				pat->dataList[patPos].ID = -1; // will be renumbered later
-				pat->dataList[patPos].note = var->dataList[v].note;
-				pat->dataList[patPos].label = MidiMessage::getMidiNoteName(var->dataList[v].note, true, true, 5);
-				pat->dataList[patPos].velocity = var->dataList[v].velocity;
-				pat->dataList[patPos].timestamp = var->dataList[v].timestamp;
-				pat->dataList[patPos].length = 0;
-				int measur = (int)floor(var->dataList[v].timestamp / (numerator * Topiary::TicksPerQuarter));
-				pat->dataList[patPos].measure = measur;
-				int timestamp = var->dataList[v].timestamp - measur * (numerator * Topiary::TicksPerQuarter);
-				int bea = (int)floor(timestamp / Topiary::TicksPerQuarter);
-				pat->dataList[patPos].beat = bea;
-				int tic = timestamp - bea * Topiary::TicksPerQuarter;
-				pat->dataList[patPos].tick = tic;
-			}
-			else if (var->dataList[v].midiType == Topiary::MidiType::NoteOff)
-			{
-				// find the note and set the length
-				int timestamp = var->dataList[v].timestamp; // timestamp of end of note
-				int note = var->dataList[v].note; 
-				bool cont = true;
-				int pIndex = 0;
-				int numPats = pat->numItems;
-
-				while (cont && (pIndex<numPats))
-				{
-					if ((pat->dataList[pIndex].ID == -1) && (pat->dataList[pIndex].note  == note))
-					{
-						// we found the note to end
-						pat->dataList[pIndex].length = timestamp - pat->dataList[pIndex].timestamp;
-						pat->dataList[pIndex].ID = -2; // so we don't cover it again
-						cont = false;
-					}
-					pIndex++;
-				}
-			}
-			else jassert(false); // should not happen; should be note on or note off event for now
-		}
-		
-	}
-	// resort 
-	pat->sortByTimestamp();
-
-	Logger::outputDebugString("------------------------");
-	for (int j = 0; j < pat->numItems; j++)
-	{
-		Logger::outputDebugString("<" + String(j) + "> <ID" + String(pat->dataList[j].ID) + "> Note: " + String(pat->dataList[j].note) + " timestamp " + String(pat->dataList[j].timestamp));
-	}
-	Logger::outputDebugString("------------------------");
-
-	generateAllVariations(-1);
-	// inform pattern tab
-	broadcaster.sendActionMessage(MsgPattern);
-	*/
+	
 }  // processMidiRecording
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -1740,6 +1697,286 @@ void TopiaryRiffzModel::keytrack(int note)
 		keytracker.push(note);
 
 } // keytrack
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+void TopiaryRiffzModel::processPluginParameters()
+{
+	// check whether we are running or not as that defines which variation it applies to!!!
+
+	int var;
+	if (runState == Topiary::Running)
+		var = variationRunning;
+	else
+		var = variationSelected;
+
+	///////////////////////////////
+	// RANDOM NOTE LENGTH
+	///////////////////////////////
+
+	auto currentRndNoteLen = rndNoteLength->get();  // between 0 and 100
+	
+	if (prevRndNoteLength != -1)
+	{
+		if (abs(prevRndNoteLength - currentRndNoteLen) > 0.99)
+		{
+			if (variation[var].lengthValue != (int) currentRndNoteLen)
+			{
+				variation[var].lengthValue = (int)currentRndNoteLen;
+				prevRndNoteLength = currentRndNoteLen;
+				//Log("UPDATING VARIATION " + String(var), Topiary::LogType::Info);
+				broadcaster.sendActionMessage(MsgVariationDefinition);
+			}
+		}
+	}
+	else
+	{
+		prevRndNoteLength = currentRndNoteLen; // init
+		//Log("INIT value not processed: " + String(currentRndNoteLen), Topiary::LogType::Info);
+		broadcaster.sendActionMessage(MsgVariationDefinition);
+
+	}
+
+	int currentBoolNoteLen = (int) boolNoteLength->get();  // between 0 and 100
+
+	if (prevBoolNoteLength != -1)
+	{
+		if (prevBoolNoteLength != currentBoolNoteLen)
+		{
+			
+			if (variation[var].randomizeLength != (bool) currentBoolNoteLen)
+			{
+				Log("Currentbool " + String(currentBoolNoteLen), Topiary::LogType::Info);
+				variation[var].randomizeLength = (bool) currentBoolNoteLen;
+				prevBoolNoteLength = currentBoolNoteLen;
+				//Log("UPDATING VARIATION " + String(var), Topiary::LogType::Info);
+				broadcaster.sendActionMessage(MsgVariationDefinition);
+			}
+			
+		}
+		
+	}
+	else
+	{
+		prevBoolNoteLength = currentBoolNoteLen; // init
+		//Log("INIT value not processed: " + String(currentBoolNoteLen), Topiary::LogType::Info);
+		broadcaster.sendActionMessage(MsgVariationDefinition);
+
+	}
+
+	///////////////////////////////
+	// RANDOM NOTE OCCURRENCE
+	///////////////////////////////
+
+	auto currentRndNoteOccurrence = rndNoteOccurrence->get();  // between 0 and 100
+
+	if (prevRndNoteOccurrence != -1)
+	{
+		if (abs(prevRndNoteOccurrence - currentRndNoteOccurrence) > 0.99)
+		{
+			if (variation[var].randomizeNotesValue != (int)currentRndNoteOccurrence)
+			{
+				variation[var].randomizeNotesValue = (int)currentRndNoteOccurrence;
+				prevRndNoteOccurrence = currentRndNoteOccurrence;
+				//Log("UPDATING VARIATION " + String(var), Topiary::LogType::Info);
+				broadcaster.sendActionMessage(MsgVariationDefinition);
+			}
+		}
+	}
+	else
+	{
+		prevRndNoteOccurrence = currentRndNoteOccurrence; // init
+		//Log("INIT value not processed: " + String(currentRndNoteLen), Topiary::LogType::Info);
+		broadcaster.sendActionMessage(MsgVariationDefinition);
+
+	}
+
+	int currentBoolNoteOccurrence = (int)boolNoteOccurrence->get();  // between 0 and 127
+
+	if (prevBoolNoteOccurrence != -1)
+	{
+		if (prevBoolNoteOccurrence != currentBoolNoteOccurrence) 
+		{
+
+			if (variation[var].randomizeNotes != (bool)currentBoolNoteOccurrence)
+			{
+				//Log("Currentbool " + String(currentBoolNoteLen), Topiary::LogType::Info);
+				variation[var].randomizeNotes = (bool)currentBoolNoteOccurrence;
+				prevBoolNoteOccurrence = currentBoolNoteOccurrence;
+				//Log("UPDATING VARIATION " + String(var), Topiary::LogType::Info);
+				broadcaster.sendActionMessage(MsgVariationDefinition);
+			}
+		}
+		
+	}
+	else
+	{
+		prevBoolNoteOccurrence = currentBoolNoteOccurrence; // init
+		//Log("INIT value not processed: " + String(currentBoolNoteLen), Topiary::LogType::Info);
+		broadcaster.sendActionMessage(MsgVariationDefinition);
+
+	}
+
+	///////////////////////////////
+	// SWING
+	///////////////////////////////
+
+	auto currentSwingAmount = swingAmount->get();  // between 0 and 100
+
+	if (prevSwingAmount != -1)
+	{
+		if (abs(prevSwingAmount - currentSwingAmount) > 0.99)
+		{
+			if (variation[var].swingValue != (int)currentSwingAmount)
+			{
+				variation[var].swingValue = (int)currentSwingAmount;
+				prevSwingAmount = currentSwingAmount;
+				//Log("UPDATING VARIATION " + String(var), Topiary::LogType::Info);
+				broadcaster.sendActionMessage(MsgVariationDefinition);
+			}
+		}
+	}
+	else
+	{
+		prevSwingAmount = currentSwingAmount; // init
+		//Log("INIT value not processed: " + String(currentRndNoteLen), Topiary::LogType::Info);
+		broadcaster.sendActionMessage(MsgVariationDefinition);
+
+	}
+
+	int currentBoolSwing = (int)boolSwing->get();  // between 0 and 127
+
+	if (prevBoolSwing != -1)
+	{
+		if (prevBoolSwing != currentBoolSwing)
+		{
+
+			if (variation[var].swing != (bool)currentBoolSwing)
+			{
+				//Log("Currentbool " + String(currentBoolNoteLen), Topiary::LogType::Info);
+				variation[var].swing = (bool)currentBoolSwing;
+				prevBoolSwing = currentBoolSwing;
+				//Log("UPDATING VARIATION " + String(var), Topiary::LogType::Info);
+				broadcaster.sendActionMessage(MsgVariationDefinition);
+			}
+		}
+
+	}
+	else
+	{
+		prevBoolSwing = currentBoolSwing; // init
+		//Log("INIT value not processed: " + String(currentBoolNoteLen), Topiary::LogType::Info);
+		broadcaster.sendActionMessage(MsgVariationDefinition);
+
+	}
+
+	///////////////////////////////
+	// TIMING
+	///////////////////////////////
+
+	auto currentRndTiming = rndTiming->get();  // between 0 and 100
+
+	if (prevRndTiming != -1)
+	{
+		if (abs(prevRndTiming - currentRndTiming) > 0.99)
+		{
+			if (variation[var].timingValue != (int)currentRndTiming)
+			{
+				variation[var].timingValue = (int)currentRndTiming;
+				prevRndTiming = currentRndTiming;
+				//Log("UPDATING VARIATION " + String(var), Topiary::LogType::Info);
+				broadcaster.sendActionMessage(MsgVariationDefinition);
+			}
+		}
+	}
+	else
+	{
+		prevRndTiming = currentRndTiming; // init
+		//Log("INIT value not processed: " + String(currentRndNoteLen), Topiary::LogType::Info);
+		broadcaster.sendActionMessage(MsgVariationDefinition);
+
+	}
+
+	int currentBoolTiming = (int)boolTiming->get();  // between 0 and 127
+
+	if (prevBoolTiming != -1)
+	{
+		if (prevBoolTiming != currentBoolTiming)
+		{
+
+			if (variation[var].randomizeTiming != (bool)currentBoolTiming)
+			{
+				//Log("Currentbool " + String(currentBoolNoteLen), Topiary::LogType::Info);
+				variation[var].randomizeTiming = (bool)currentBoolTiming;
+				prevBoolTiming = currentBoolTiming;
+				//Log("UPDATING VARIATION " + String(var), Topiary::LogType::Info);
+				broadcaster.sendActionMessage(MsgVariationDefinition);
+			}
+		}
+
+	}
+	else
+	{
+		prevBoolTiming = currentBoolTiming; // init
+		//Log("INIT value not processed: " + String(currentBoolNoteLen), Topiary::LogType::Info);
+		broadcaster.sendActionMessage(MsgVariationDefinition);
+
+	}
+
+
+	///////////////////////////////
+	// VELOCITY
+	///////////////////////////////
+
+	auto currentRndVelocity = rndVelocity->get();  // between 0 and 100
+
+	if (prevRndVelocity != -1)
+	{
+		if (abs(prevRndVelocity - currentRndVelocity) > 0.99)
+		{
+			if (variation[var].velocityValue != (int)currentRndVelocity)
+			{
+				variation[var].velocityValue = (int)currentRndVelocity;
+				prevRndVelocity = currentRndVelocity;
+				//Log("UPDATING VARIATION " + String(var), Topiary::LogType::Info);
+				broadcaster.sendActionMessage(MsgVariationDefinition);
+			}
+		}
+	}
+	else
+	{
+		prevRndVelocity = currentRndVelocity; // init
+		//Log("INIT value not processed: " + String(currentRndNoteLen), Topiary::LogType::Info);
+		broadcaster.sendActionMessage(MsgVariationDefinition);
+
+	}
+
+	int currentBoolVelocity = (int)boolVelocity->get();  // between 0 and 127
+
+	if (prevBoolVelocity != -1)
+	{
+		if (prevBoolVelocity != currentBoolVelocity)
+		{
+
+			if (variation[var].randomizeVelocity != (bool)currentBoolVelocity)
+			{
+				//Log("Currentbool " + String(currentBoolNoteLen), Topiary::LogType::Info);
+				variation[var].randomizeVelocity = (bool)currentBoolVelocity;
+				prevBoolVelocity = currentBoolVelocity;
+				//Log("UPDATING VARIATION " + String(var), Topiary::LogType::Info);
+				broadcaster.sendActionMessage(MsgVariationDefinition);
+			}
+		}
+
+	}
+	else
+	{
+		prevBoolVelocity = currentBoolVelocity; // init
+		//Log("INIT value not processed: " + String(currentBoolNoteLen), Topiary::LogType::Info);
+		broadcaster.sendActionMessage(MsgVariationDefinition);
+
+	}
+} // processPluginParameters
 
 
 #include "../../Topiary/Source/Components/TopiaryMidiLearnEditor.cpp.h"

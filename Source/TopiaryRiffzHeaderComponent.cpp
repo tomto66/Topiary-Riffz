@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 /*
-This file is part of Topiary Riffz, Copyright Tom Tollenaere 2018-19.
+This file is part of Topiary Riffz, Copyright Tom Tollenaere 2019-21.
 
 Topiary Riffz is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -33,6 +33,12 @@ TopiaryRiffzHeaderComponent::TopiaryRiffzHeaderComponent()
 	addAndMakeVisible(timeEditor);
 	timeEditor.setVisible(false);
 	timeEditor.setEnabled(false);
+	addAndMakeVisible(lockedEditor);
+	lockedEditor.setText("PLUGIN STATE LOCKED");
+	lockedEditor.setReadOnly(true);
+	lockedEditor.setColour(TextEditor::backgroundColourId, TopiaryColour::orange);
+	lockedEditor.setColour(TextEditor::textColourId, Colours::lightyellow);
+	lockedEditor.setColour(TextEditor::outlineColourId, TopiaryColour::orange);
 
 }
 
@@ -54,6 +60,11 @@ void TopiaryRiffzHeaderComponent::setModel(TopiaryRiffzModel* m)
 	variationButtonsComponent.checkModel();
 	transportComponent.checkModel();
 	warningEditor.setVisible(false);
+	
+	if (m->getLockState())
+		lockedEditor.setVisible(true);
+	else
+		lockedEditor.setVisible(false);
 } // setModel
 
 /////////////////////////////////////////////////////////////////////////
@@ -74,7 +85,8 @@ void TopiaryRiffzHeaderComponent::paint(Graphics& g) {
 	variationButtonsComponent.setBounds(640,30 ,350,45);
 	transportComponent.setBounds(295, 30, 350,45);
 
-	warningEditor.setBounds(645, 5, 330, 18);
+	warningEditor.setBounds(645, 5, 350, 18);
+	lockedEditor.setBounds(295, 5, 150, 18);
 	timeEditor.setBounds(402, 17, 70, 18);
 
 }
@@ -84,6 +96,13 @@ void TopiaryRiffzHeaderComponent::paint(Graphics& g) {
 void TopiaryRiffzHeaderComponent::actionListenerCallback(const String &message)
 {
 	
+	if (message.compare(MsgLockState) == 0)
+	{
+		if (riffzModel->getLockState())
+			lockedEditor.setVisible(true);
+		else
+			lockedEditor.setVisible(false);
+	}
 	if (message.compare(MsgWarning) == 0)
 	{
 		warningEditor.setText(riffzModel->getLastWarning());
@@ -93,6 +112,7 @@ void TopiaryRiffzHeaderComponent::actionListenerCallback(const String &message)
 	else if (message.compare(MsgTiming) == 0) 
 	{
 		timeEditor.setVisible(true);
+		lockedEditor.setVisible(true);
 		getTime();
 		startTimer(5000);
 	}
@@ -114,9 +134,15 @@ void TopiaryRiffzHeaderComponent::actionListenerCallback(const String &message)
 void TopiaryRiffzHeaderComponent::timerCallback()
 {
 	if (warningEditor.isVisible())
+	{
 		warningEditor.setVisible(false);
+	}
 	else if (timeEditor.isVisible())
+	{
 		timeEditor.setVisible(false);
+		if (riffzModel->getLockState())
+			lockedEditor.setVisible(true);
+	}
 	stopTimer();
 }
 

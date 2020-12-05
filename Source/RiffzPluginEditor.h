@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 /*
-This file is part of Topiary Riffz, Copyright Tom Tollenaere 2018-19.
+This file is part of Topiary Riffz, Copyright Tom Tollenaere 2018-21.
 
 Topiary Riffz is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -28,29 +28,3 @@ along with Topiary Riffz. If not, see <https://www.gnu.org/licenses/>.
 #define TOPIARYEDITORCOMPONENT TopiaryRiffzComponent
 #include "../../Topiary/Source/Plugin/PluginEditor.h"
 
-/*
-
-//==============================================================================
-
-
-class TopiaryRiffzAudioProcessorEditor  : public AudioProcessorEditor
-{
-public:
-    TopiaryRiffzAudioProcessorEditor (TopiaryRiffzAudioProcessor&);
-    ~TopiaryRiffzAudioProcessorEditor();
-
-    //==============================================================================
-    void paint (Graphics&) override;
-    void resized() override;
-
-private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
-    TopiaryRiffzAudioProcessor& processor;
-	TopiaryRiffzModel* riffzModel;
-
-	TopiaryRiffzComponent topiaryRiffzComponent;
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TopiaryRiffzAudioProcessorEditor)
-};
-*/

@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 /*
-This file is part of Topiary Riffz, Copyright Tom Tollenaere 2018-20.
+This file is part of Topiary Riffz, Copyright Tom Tollenaere 2019-21.
 
 Topiary Riffz is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -182,23 +182,6 @@ void TopiaryRiffzVariationComponent::getVariationDefinition()
 
 } // getVariationDefinition
 
-/////////////////////////////////////////////////////////////////////////
-/*
-void TopiaryRiffzVariationComponent::getNoteLength()
-{
-	// get note randomisation from model
-	bool enable;
-	
-	int value;
-
-	riffzModel->getRandomizeNotes(variationDefinitionComponent.variationCombo.getSelectedId()-1, enable, value);
-
-	randomNoteComponent.onButton.setToggleState(enable, dontSendNotification);
-	
-	randomNoteComponent.percentSlider.setValue(value, dontSendNotification);
-
-} // getRandomizeNotes
-*/
 /////////////////////////////////////////////////////////////////////////
 
 void TopiaryRiffzVariationComponent::getRandomizeNotes()
@@ -597,5 +580,27 @@ void TopiaryRiffzVariationComponent::deleteNoteAssignment()
 		noteAssignmentComponent.noteAssignmentTable.selectRow(0);
 	}
 	
+} // deletenoteAssignment
 
+//////////////////////////////////////////////////////////////////////////
+
+void TopiaryRiffzVariationComponent::enable()
+{
+	noteAssignmentComponent.setEnabled(true);
+	variationDefinitionComponent.setEnabled(true);
+	variationTypeComponent.setEnabled(true);
+	swingQComponent.setEnabled(true);
 }
+
+//////////////////////////////////////////////////////////////////////////
+
+void TopiaryRiffzVariationComponent::disable()
+{
+	noteAssignmentComponent.setEnabled(false);
+	variationDefinitionComponent.setEnabled(false);
+	variationTypeComponent.setEnabled(false);
+	swingQComponent.setEnabled(false);
+}
+
+//////////////////////////////////////////////////////////////////////////
+

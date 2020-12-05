@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 /*
-This file is part of Topiary, Copyright Tom Tollenaere 2018-20.
+This file is part of Topiary, Copyright Tom Tollenaere 2018-21.
 
 Topiary is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -1367,6 +1367,33 @@ void TOPIARYMODEL::validateTableEdit(int p, XmlElement* child, String attribute)
 } // validateTableEdit
 
 #endif // for validateTableEdits
+
+///////////////////////////////////////////////////////////////////////
+// State logic
 ///////////////////////////////////////////////////////////////////////
 
-#endif
+#ifdef RIFFZ
+bool TOPIARYMODEL::getLockState()
+{
+	return lockState;
+}
+
+void TOPIARYMODEL::setLockState(bool state)
+{
+	lockState = state;
+	broadcaster.sendActionMessage(MsgLockState);
+}
+
+void TOPIARYMODEL::saveState()
+{
+	addParametersToModel();
+}
+
+void TOPIARYMODEL::restoreState()
+{
+	restoreParametersToModel();
+}
+#endif // ifdef RIFFZ
+
+
+#endif  // ifdef TOPIARYMODEL

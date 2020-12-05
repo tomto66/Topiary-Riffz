@@ -1,1 +1,1 @@
-#define BUILD_DATE __DATE__ " " __TIME__
+#define BUILD_DATE   __DATE__ " " __TIME__

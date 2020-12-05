@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 /*
-This file is part of Topiary Riffz, Copyright Tom Tollenaere 2018-20.
+This file is part of Topiary Riffz, Copyright Tom Tollenaere 2019-21.
 
 Topiary Riffz is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -55,6 +55,9 @@ public:
 
 	void saveNoteAssignment();
 	void deleteNoteAssignment();
+
+	void enable();
+	void disable();
 
 private:
 	   

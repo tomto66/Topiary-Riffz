@@ -46,6 +46,58 @@ TopiaryAudioProcessor::TopiaryAudioProcessor()
 #endif
 {
 	processedMidi.ensureSize(50000);
+#ifdef RIFFZ
+	
+	addParameter(model.boolNoteLength = new juce::AudioParameterBool("noteLenght", // parameterID
+		"Randomize Note Length", // parameter name
+		false)); // default value
+
+	addParameter(model.rndNoteLength = new juce::AudioParameterFloat("rndNoteLength", // parameterID
+		"Randomize Note Length Amount", // parameter name
+		juce::NormalisableRange<float>(0.0f, 100.0f),
+		0.0f)); // default value
+
+
+	addParameter(model.boolNoteOccurrence = new juce::AudioParameterBool("rndNote", // parameterID
+		"Randomize Note Occurrence", // parameter name
+		false)); // default value
+
+	addParameter(model.rndNoteOccurrence = new juce::AudioParameterFloat("rndNoteOccurrence", // parameterID
+		"Randomize Note Occurrence Amount", // parameter name
+		juce::NormalisableRange<float>(0.0f, 100.0f),
+		0.0f)); // default value
+
+
+	addParameter(model.boolSwing = new juce::AudioParameterBool("swing", // parameterID
+		"Swing", // parameter name
+		false)); // default value
+
+	addParameter(model.swingAmount = new juce::AudioParameterFloat("swingAmount", // parameterID
+		"Swing Amount", // parameter name
+		juce::NormalisableRange<float>(-100.0f, 100.0f),
+		0.0f)); // default value
+
+
+	addParameter(model.boolTiming = new juce::AudioParameterBool("timing", // parameterID
+		"Randomize Note Timing", // parameter name
+		false)); // default value
+
+	addParameter(model.rndTiming = new juce::AudioParameterFloat("rndTiming", // parameterID
+		"Randomize Note Timing Amount", // parameter name
+		juce::NormalisableRange<float>(0.0f, 100.0f),
+		0.0f)); // default value
+
+
+	addParameter(model.boolVelocity = new juce::AudioParameterBool("velocity", // parameterID
+		"Randomize Velocity", // parameter name
+		false)); // default value
+
+	addParameter(model.rndVelocity = new juce::AudioParameterFloat("rndVelocity", // parameterID
+		"Randomize Velocity Amount", // parameter name
+		juce::NormalisableRange<float>(0.0f, 100.0f),
+		0.0f)); // default value
+		
+#endif
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -186,10 +238,15 @@ bool TopiaryAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) c
 
 void TopiaryAudioProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
 {
+
+#ifdef RIFFZ
+	model.processPluginParameters();
+#endif
+
 	// the audio buffer in a midi effect will have zero channels!
 	jassert(buffer.getNumChannels() == 0);
 
-	// processedMidi is declared as a member - because we preallocate plenty of space to avoid a mallo should it run out of space!!!
+	// processedMidi is declared as a member - because we preallocate plenty of space to avoid a malloc should it run out of space!!!
 	// midibuffer object to hold what we generate
 	// at the end of the processorblock we will swap &midiMessages (that came in) by processedMidi (what goes out)
 	// but we need to clear it because it may still have data in it from previous run

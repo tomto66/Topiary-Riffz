@@ -124,6 +124,7 @@ public:
 #define MsgRealTimeParameter "r" // signal that something in realtime needs updating in editor
 #define MsgSelectedNoteAssignmentRowsChanged "N"
 #define MsgNoteAssignment "A" // signal that note assignment table changed
+#define MsgLockState "l"
 
 	////////// Utility
 

@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 /*
-This file is part of Topiary Riffz, Copyright Tom Tollenaere 2018-20.
+This file is part of Topiary Riffz, Copyright Tom Tollenaere 2018-21.
 
 Topiary Riffz is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -200,8 +200,16 @@ public:
 
 	void outputNoteOn(int noteNumber);
 	void outputNoteOff(int noteNumber);
+
+	void processPluginParameters();
+
 	TopiaryKeytracker keytracker;
 	TopiaryVariation* parentPattern; // maintained by void maintainParentattern in processvariationSwitch
+
+	void setLockState(bool state);
+	bool getLockState();
+	void saveState();
+	void restoreState();
 
 	int keyRangeFrom = 0;
 	int keyRangeTo = 127;
@@ -211,14 +219,39 @@ public:
 	bool latch2 = false;    // different latch, does run End when no key pressed and then re-arms
 	bool latch2Restart = false;
 
+	juce::AudioParameterFloat* rndNoteOccurrence;
+	juce::AudioParameterBool* boolNoteOccurrence;
+
+	juce::AudioParameterFloat* swingAmount;
+	juce::AudioParameterBool* boolSwing;
+
+	juce::AudioParameterFloat* rndVelocity;
+	juce::AudioParameterBool* boolVelocity;
+
+	juce::AudioParameterFloat* rndNoteLength;
+	juce::AudioParameterBool* boolNoteLength;
+
+	juce::AudioParameterFloat* rndTiming;
+	juce::AudioParameterBool* boolTiming;
+	
 private:
 	TopiaryPatternList patternList;
 	TopiaryPattern patternData[MAXNOPATTERNS];
 	Variation variation[8];  	// struct to hold variation detail
 	TopiaryNoteOffBuffer noteOffBuffer;
-	
+	float prevRndNoteOccurrence;
+	int prevBoolNoteOccurrence;
+	float prevSwingAmount;
+	int prevBoolSwing;
+	float prevRndVelocity;
+	int prevBoolVelocity;
+	float prevRndNoteLength;
+	int prevBoolNoteLength;
+	float prevRndTiming;
+	int prevBoolTiming;
+
 	int outputChannel = 1;		// output of plugin
-	
+	bool lockState = false;
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -325,6 +358,7 @@ private:
 		addToModel(parameters, keyRangeFrom, "keyRangeFrom");
 		addToModel(parameters, keyRangeTo, "keyRangeTo");
 		addToModel(parameters, keytracker.noteOrder, "noteOrder");
+		addToModel(parameters, lockState, "lockState");
 
 		addToModel(parameters, overrideHostTransport, "overrideHostTransport");
 		addToModel(parameters, notePassThrough, "notePassThrough");
@@ -457,6 +491,7 @@ private:
 						else if (parameterName.compare("logInfo") == 0)	logInfo = parameter->getBoolAttribute("Value");
 
 						else if (parameterName.compare("filePath") == 0)	filePath = parameter->getStringAttribute("Value");
+						else if (parameterName.compare("lockState") == 0) lockState = parameter->getBoolAttribute("Value");
 
 						//if (parameterName.compare("lenInTicks") == 0) variation[parameter->getIntAttribute("Index")].lenInTicks = parameter->getIntAttribute("Value");
 						else if (parameterName.compare("lenInMeasures") == 0) variation[parameter->getIntAttribute("Index")].lenInMeasures = parameter->getIntAttribute("Value");

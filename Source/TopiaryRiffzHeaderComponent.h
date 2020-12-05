@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 /*
-This file is part of Topiary Riffz, Copyright Tom Tollenaere 2018-19.
+This file is part of Topiary Riffz, Copyright Tom Tollenaere 2018-21.
 
 Topiary Riffz is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -40,6 +40,7 @@ private:
 	TopiaryRiffzVariationButtonsComponent variationButtonsComponent;
 	TopiaryRiffzModel* riffzModel;
 	TextEditor warningEditor;
+	TextEditor lockedEditor;
 	TextEditor timeEditor;
 
 	//////////////////////////////////////////////////////
