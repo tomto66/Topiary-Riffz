@@ -236,56 +236,12 @@ int validNoteNumber(String inNote)
 
 	return noteNumber;
 
-	/*
-	auto c = static_cast<const char*> (inNote.toUTF8());
-	char note = ' ';
-	int octave = -1;
-	char sharp = '!';
-	int number=0;
-
-	if (inNote.length() == 2)
-	{
-		sscanf((char*)c, "%1c%1d", &note, &octave);
-	}
-	else
-	{
-		sscanf((char*)c, "%1c%1c%d", &note, &sharp, &octave);
-	}
-
-	switch ((int)note)
-	{
-	case (int)'C': number = 0;
-		break;
-	case (int)'D': number = 2;
-		break;
-	case (int)'E': number = 4;
-		break;
-	case (int)'F': number = 5;
-		break;
-	case (int)'G': number = 7;
-		break;
-	case (int)'A': number = 9;
-		break;
-	case (int)'B': number = 11; 
-		break;
-		default: jassert(0);
-
-	}
-
-	if (sharp == '#') number++;
-	number = number + (12 * octave);
-
-	if (number < 21) number = 21;
-	if (number > 109) number = 109;
-
-	//Logger::outputDebugString(String("input ") + String(inNote));
-	//Logger::outputDebugString(String("output ") + String(number));
-
-	return number;
-	*/
-
 }  // validNoteNumber
 
+String noteNumberToString(int n)
+{
+	return MidiMessage::getMidiNoteName(n, true, true, 5);
+}
 //////////////////////////////////////////////////////////////////////////
 
 void TopiaryButton::paintButton(Graphics& g, bool isMouseOverButton, bool isButtonDown)

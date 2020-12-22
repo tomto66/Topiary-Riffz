@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 /*
-This file is part of Topiary Riffz, Copyright Tom Tollenaere 2018-20.
+This file is part of Topiary Riffz, Copyright Tom Tollenaere 2018-21.
 
 Topiary Riffz is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -149,7 +149,7 @@ TopiaryRiffzModel::TopiaryRiffzModel()
 	}
 
 	ccVariationSwitching = true;
-	variationSwitchChannel = 0;
+	midiChannelListening = 0;
 
 	overrideHostTransport = true;
 	keytracker.noteOrder = TopiaryKeytracker::NoteOrder::Lowest;
@@ -772,7 +772,7 @@ void TopiaryRiffzModel::saveNoteAssignment(int v, int n, int o, int p)
 
 	// now assign all values
 	variation[v].noteAssignmentList.dataList[noteExistsIndex].note = n;
-	variation[v].noteAssignmentList.dataList[noteExistsIndex].noteLabel = MidiMessage::getMidiNoteName(n, true, true, 5);;
+	variation[v].noteAssignmentList.dataList[noteExistsIndex].noteLabel = noteNumberToString(n);
 	variation[v].noteAssignmentList.dataList[noteExistsIndex].offset = o;
 	variation[v].noteAssignmentList.dataList[noteExistsIndex].patternId = p;
 	variation[v].noteAssignmentList.dataList[noteExistsIndex].patternName = patternList.dataList[p].name;
@@ -780,13 +780,13 @@ void TopiaryRiffzModel::saveNoteAssignment(int v, int n, int o, int p)
 
 	// warn if assignment out of key range
 	if ((n<keyRangeFrom) ||(n>keyRangeTo))
-		Log("Note "+String(MidiMessage::getMidiNoteName(n, true, true, 5))+" assigned but out of key range.", Topiary::Warning);
+		Log("Note "+String(noteNumberToString(n))+" assigned but out of key range.", Topiary::Warning);
 	
 	generateVariation(v, -1);
 
 	broadcaster.sendActionMessage(MsgNoteAssignment);
 	
-}
+} // saveNotAssignment
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -865,13 +865,10 @@ void TopiaryRiffzModel::generateVariation(int v, int p, int eightToGenerate)
 		}
 
 	}
-	//else if (measureToGenerate == patternList.dataList[patternToUse].measures) // we ran over end of pattern
-	//	measureToGenerate = 0;
-
-	for (int j = 0; j < pat->numItems; j++)
+	else for (int j = 0; j < pat->numItems; j++)
 	{
 		//int measre = (int) pat->dataList[j].timestamp / (numerator * Topiary::TicksPerQuarter);
-		if ( ((var->dataList[j].timestamp >=tickFrom) && (var->dataList[j].timestamp < tickTo)) || (eightToGenerate == -1) )
+		if ( ((var->dataList[j].timestamp >=tickFrom) && (var->dataList[j].timestamp < tickTo))  )
 			var->dataList[j].midiType = Topiary::MidiType::NOP;
 	}
 
@@ -924,53 +921,15 @@ void TopiaryRiffzModel::generateVariation(int v, int p, int eightToGenerate)
 				else
 					var->dataList[vIndex].midiType = Topiary::MidiType::NOP;
 
-			// length randomisation
-			var->dataList[vIndex].length = pat->dataList[pIndex].length;
+				// length randomisation
+				var->dataList[vIndex].length = pat->dataList[pIndex].length;
 
-			if (variation[v].randomizeLength)
-			{
-				int len = pat->dataList[vIndex].length;
-				float rnd;
-				int direction;
-				if (variation[v].lengthPlus && variation[v].lengthMin)
+				if (variation[v].randomizeLength)
 				{
-					rnd = randomizer.nextFloat();
-					if (rnd > 0.5)
-						direction = 1;
-					else
-						direction = -1;
-				}
-				else if (variation[v].velocityPlus)
-					direction = 1;
-				else direction = -1;
-
-				rnd = randomizer.nextFloat();
-				//int debug = direction * rnd * 128 * variation[v].velocityValue /100;
-				len = len + (int)(direction * rnd * 128 * len / 100);   // originally / 100 but I want more of an effect
-
-				/// make sure it does not run over length of the pattern
-				/// int length = var->dataList[vIndex].length;
-				if (len >= var->patLenInTicks)
-				{
-					len = var->patLenInTicks - 1;
-				}
-				else if (len < 0)
-					len = 1;
-
-				var->dataList[vIndex].length = len;
-
-			} // end randomize length
-
-			var->dataList[vIndex].velocity = pat->dataList[pIndex].velocity;
-			int timestamp = pat->dataList[pIndex].timestamp;
-			var->dataList[vIndex].timestamp = timestamp;
-			if (doNote)
-				if (variation[v].randomizeVelocity && (variation[v].velocityPlus || variation[v].velocityMin))
-				{
-					int vel = pat->dataList[pIndex].velocity;
+					int len = pat->dataList[vIndex].length;
 					float rnd;
 					int direction;
-					if (variation[v].velocityPlus && variation[v].velocityMin)
+					if (variation[v].lengthPlus && variation[v].lengthMin)
 					{
 						rnd = randomizer.nextFloat();
 						if (rnd > 0.5)
@@ -983,72 +942,111 @@ void TopiaryRiffzModel::generateVariation(int v, int p, int eightToGenerate)
 					else direction = -1;
 
 					rnd = randomizer.nextFloat();
-					
-					vel = vel + (int)(direction * rnd * 128 * variation[v].velocityValue / 50);   // originally / 100 but I want more of an effect
+					//int debug = direction * rnd * 128 * variation[v].velocityValue /100;
+					len = len + (int)(direction * rnd * 128 * len / 100);   // originally / 100 but I want more of an effect
 
-					if (variation[v].randomizeVelocity)
+					/// make sure it does not run over length of the pattern
+					/// int length = var->dataList[vIndex].length;
+					if (len >= var->patLenInTicks)
+					{
+						len = var->patLenInTicks - 1;
+					}
+					else if (len < 0)
+						len = 1;
+
+					var->dataList[vIndex].length = len;
+						
+				} // end randomize length
+
+				var->dataList[vIndex].velocity = pat->dataList[pIndex].velocity;
+				int timestamp = pat->dataList[pIndex].timestamp;
+				var->dataList[vIndex].timestamp = timestamp;
+				if (doNote)
+					if (variation[v].randomizeVelocity && (variation[v].velocityPlus || variation[v].velocityMin))
+					{
+						int vel = pat->dataList[pIndex].velocity;
+						float rnd;
+						int direction;
+						if (variation[v].velocityPlus && variation[v].velocityMin)
+						{
+							rnd = randomizer.nextFloat();
+							if (rnd > 0.5)
+								direction = 1;
+							else
+								direction = -1;
+						}
+						else if (variation[v].velocityPlus)
+							direction = 1;
+						else direction = -1;
+
+						rnd = randomizer.nextFloat();
+					
+						vel = vel + (int)(direction * rnd * 128 * variation[v].velocityValue / 50);   // originally / 100 but I want more of an effect
+
+						if (variation[v].randomizeVelocity)
 						vel = vel + variation[v].velocityValue;
 
-					if (vel > 127) vel = 127;
-					else if (vel < 0) vel = 0;
-					var->dataList[vIndex].velocity = vel;
+						if (vel > 127) vel = 127;
+						else if (vel < 0) 
+							vel = 0;
+						
+						var->dataList[vIndex].velocity = vel;
 
-				} // velocity randomization
+					} // velocity randomization
 
-
-			if (variation[v].swing && doNote)
-			{
-				// recalc the timestamp, based on the swing lookup table
-				//Logger::outputDebugString("Timestamp pre " + String(timestamp));
-				int base;
-
-				//double debugFirst;
-				//int debugSecond;
-				//int debugThird;
-				if (variation[v].swingQ == Topiary::SwingQButtonIds::SwingQ8)
+				if (variation[v].swing && doNote)
 				{
-					base = ((int)floor(timestamp / (Topiary::TicksPerQuarter / 2))) * (int)(Topiary::TicksPerQuarter / 2);
-					//debugFirst = floor(timestamp / (Topiary::TicksPerQuarter / 2));
-					//debugSecond = (int)(Topiary::TicksPerQuarter / 2);
-					//debugThird = (int)floor(timestamp / (Topiary::TicksPerQuarter / 2));
+					// recalc the timestamp, based on the swing lookup table
+					//Logger::outputDebugString("Timestamp pre " + String(timestamp));
+					int base;
 
-				}
-				else
-					base = ((int)floor(timestamp / Topiary::TicksPerQuarter)) * Topiary::TicksPerQuarter;
+					//double debugFirst;
+					//int debugSecond;
+					//int debugThird;
+					if (variation[v].swingQ == Topiary::SwingQButtonIds::SwingQ8)
+					{
+						base = ((int)floor(timestamp / (Topiary::TicksPerQuarter / 2))) * (int)(Topiary::TicksPerQuarter / 2);
+						//debugFirst = floor(timestamp / (Topiary::TicksPerQuarter / 2));
+						//debugSecond = (int)(Topiary::TicksPerQuarter / 2);
+						//debugThird = (int)floor(timestamp / (Topiary::TicksPerQuarter / 2));
+					}
+					else
+						base = ((int)floor(timestamp / Topiary::TicksPerQuarter)) * Topiary::TicksPerQuarter;
 
-				//Logger::outputDebugString("Remainder pre " + String(timestamp-base));
+					//Logger::outputDebugString("Remainder pre " + String(timestamp-base));
 
-				int remainder = swing(timestamp - base, variation[v].swingValue, variation[v].swingQ);
-				var->dataList[vIndex].timestamp = base + remainder;
+					int remainder = swing(timestamp - base, variation[v].swingValue, variation[v].swingQ);
+					var->dataList[vIndex].timestamp = base + remainder;
+						
+					//Logger::outputDebugString("Remainder post" + String (remainder));
+					//Logger::outputDebugString("New Timestamp " + String(base + remainder) + " (DIFF: " + String (timestamp-base-remainder));
 
-				//Logger::outputDebugString("Remainder post" + String (remainder));
-				//Logger::outputDebugString("New Timestamp " + String(base + remainder) + " (DIFF: " + String (timestamp-base-remainder));
-
-				jassert((remainder) <= Topiary::TicksPerQuarter);
+					jassert((remainder) <= Topiary::TicksPerQuarter);
 				jassert((base + remainder) >= 0);
 
-			} // swing
-		} // end of note specific randomization stuff, except for timing
-		else if (midiType == Topiary::CC)
-		{
-			var->dataList[vIndex].midiType = Topiary::CC;
-			var->dataList[vIndex].CC = pat->dataList[pIndex].length;
-			var->dataList[vIndex].value = pat->dataList[pIndex].value;
-		}
-		else if (midiType == Topiary::AfterTouch)
-		{ 
-			var->dataList[vIndex].midiType = Topiary::AfterTouch;
-			var->dataList[vIndex].value = pat->dataList[pIndex].value;
-		}
-		else if (midiType == Topiary::Pitch)
-		{
-			var->dataList[vIndex].midiType = Topiary::Pitch;
-			var->dataList[vIndex].value = pat->dataList[pIndex].value;
-		}
-		else jassert(false);
-				
-		// we apply timing randomization AFTER possible swing !!!
-		if ((doNote) || (midiType != Topiary::NoteOn))
+				} // swing
+			} // end of note specific randomization stuff, except for timing
+			else if (midiType == Topiary::CC)
+			{
+				var->dataList[vIndex].midiType = Topiary::CC;
+				var->dataList[vIndex].CC = pat->dataList[pIndex].length;
+				var->dataList[vIndex].value = pat->dataList[pIndex].value;
+			}
+			else if (midiType == Topiary::AfterTouch)
+			{ 
+				var->dataList[vIndex].midiType = Topiary::AfterTouch;
+				var->dataList[vIndex].value = pat->dataList[pIndex].value;
+			}
+			else if (midiType == Topiary::Pitch)
+			{
+				var->dataList[vIndex].midiType = Topiary::Pitch;
+				var->dataList[vIndex].value = pat->dataList[pIndex].value;
+			}
+			else 
+				jassert(false);
+					
+			// we apply timing randomization AFTER possible swing !!!
+			if ((doNote) || (midiType != Topiary::NoteOn))
 					if (variation[v].randomizeTiming && (variation[v].timingPlus || variation[v].timingMin))
 					{
 						int timestamp = var->dataList[vIndex].timestamp;
@@ -1091,8 +1089,7 @@ void TopiaryRiffzModel::generateVariation(int v, int p, int eightToGenerate)
 
 		//Logger::outputDebugString("Generating Note " + String(var->dataList[vIndex].note) + " timestamp " + String(var->dataList[vIndex].timestamp));
 		//auto debug = 0;
-
-			
+		
 		} // end check for measureToGenerate
 	}  // for children in original pattern
 
@@ -1472,6 +1469,7 @@ void TopiaryRiffzModel::copyVariation(int from, int to)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
+/*
 bool TopiaryRiffzModel::midiLearn(MidiMessage m)
 {
 	// called by processor; if midiLearn then learn based on what came in
@@ -1502,6 +1500,11 @@ bool TopiaryRiffzModel::midiLearn(MidiMessage m)
 				Log("Midi learned", Topiary::LogType::Warning);
 				broadcaster.sendActionMessage(MsgVariationAutomation);	// update utility tab
 			}
+#ifdef RIFFZ
+			jassert(false);
+			//if midiLearnID == Topiary::LearnMidiId::noteAssignment)
+			// midi learn of note assignemtn - make a variable in the model; set that here and the send msg to variation def screen to pick up that value and put it in the editor.
+#endif
 
 		}
 	}
@@ -1509,16 +1512,7 @@ bool TopiaryRiffzModel::midiLearn(MidiMessage m)
 	return remember;
 
 } // midiLearn
-
-///////////////////////////////////////////////////////////////////////////////////////
-
-void TopiaryRiffzModel::processMidiRecording()
-{
-	
-	jassert(false);
-	
-}  // processMidiRecording
-
+*/
 ///////////////////////////////////////////////////////////////////////////////////////
 
 void TopiaryRiffzModel::duplicatePattern(int p)  
@@ -1676,7 +1670,30 @@ void TopiaryRiffzModel::maintainParentPattern()
 void TopiaryRiffzModel::record(bool b)
 {
 	// set the recording state (does not record = recording happens in the processor!
-	UNUSED(b)
+	const GenericScopedLock<CriticalSection> myScopedLock(lockModel);
+
+	
+	if (b)
+	{
+		// do some checks
+		if (patternList.numItems == 0)
+		{
+			Log("Need at least one pattern to record into.", Topiary::LogType::Warning);
+			return;
+		}
+		else if (runState == Topiary::Running)
+		{
+			Log("Cannot start recording when running.", Topiary::LogType::Warning);
+			// should not really happen because when running the record button gets disabled
+			return;
+		}
+	}
+	else if (recordingMidi)
+		processMidiRecording();
+
+	recordingMidi = b;
+	// inform transport
+	broadcaster.sendActionMessage(MsgTransport);
 
 } // record
 
@@ -1700,283 +1717,9 @@ void TopiaryRiffzModel::keytrack(int note)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TopiaryRiffzModel::processPluginParameters()
+int TopiaryRiffzModel::getNoteAssignmentNote()
 {
-	// check whether we are running or not as that defines which variation it applies to!!!
-
-	int var;
-	if (runState == Topiary::Running)
-		var = variationRunning;
-	else
-		var = variationSelected;
-
-	///////////////////////////////
-	// RANDOM NOTE LENGTH
-	///////////////////////////////
-
-	auto currentRndNoteLen = rndNoteLength->get();  // between 0 and 100
-	
-	if (prevRndNoteLength != -1)
-	{
-		if (abs(prevRndNoteLength - currentRndNoteLen) > 0.99)
-		{
-			if (variation[var].lengthValue != (int) currentRndNoteLen)
-			{
-				variation[var].lengthValue = (int)currentRndNoteLen;
-				prevRndNoteLength = currentRndNoteLen;
-				//Log("UPDATING VARIATION " + String(var), Topiary::LogType::Info);
-				broadcaster.sendActionMessage(MsgVariationDefinition);
-			}
-		}
-	}
-	else
-	{
-		prevRndNoteLength = currentRndNoteLen; // init
-		//Log("INIT value not processed: " + String(currentRndNoteLen), Topiary::LogType::Info);
-		broadcaster.sendActionMessage(MsgVariationDefinition);
-
-	}
-
-	int currentBoolNoteLen = (int) boolNoteLength->get();  // between 0 and 100
-
-	if (prevBoolNoteLength != -1)
-	{
-		if (prevBoolNoteLength != currentBoolNoteLen)
-		{
-			
-			if (variation[var].randomizeLength != (bool) currentBoolNoteLen)
-			{
-				Log("Currentbool " + String(currentBoolNoteLen), Topiary::LogType::Info);
-				variation[var].randomizeLength = (bool) currentBoolNoteLen;
-				prevBoolNoteLength = currentBoolNoteLen;
-				//Log("UPDATING VARIATION " + String(var), Topiary::LogType::Info);
-				broadcaster.sendActionMessage(MsgVariationDefinition);
-			}
-			
-		}
-		
-	}
-	else
-	{
-		prevBoolNoteLength = currentBoolNoteLen; // init
-		//Log("INIT value not processed: " + String(currentBoolNoteLen), Topiary::LogType::Info);
-		broadcaster.sendActionMessage(MsgVariationDefinition);
-
-	}
-
-	///////////////////////////////
-	// RANDOM NOTE OCCURRENCE
-	///////////////////////////////
-
-	auto currentRndNoteOccurrence = rndNoteOccurrence->get();  // between 0 and 100
-
-	if (prevRndNoteOccurrence != -1)
-	{
-		if (abs(prevRndNoteOccurrence - currentRndNoteOccurrence) > 0.99)
-		{
-			if (variation[var].randomizeNotesValue != (int)currentRndNoteOccurrence)
-			{
-				variation[var].randomizeNotesValue = (int)currentRndNoteOccurrence;
-				prevRndNoteOccurrence = currentRndNoteOccurrence;
-				//Log("UPDATING VARIATION " + String(var), Topiary::LogType::Info);
-				broadcaster.sendActionMessage(MsgVariationDefinition);
-			}
-		}
-	}
-	else
-	{
-		prevRndNoteOccurrence = currentRndNoteOccurrence; // init
-		//Log("INIT value not processed: " + String(currentRndNoteLen), Topiary::LogType::Info);
-		broadcaster.sendActionMessage(MsgVariationDefinition);
-
-	}
-
-	int currentBoolNoteOccurrence = (int)boolNoteOccurrence->get();  // between 0 and 127
-
-	if (prevBoolNoteOccurrence != -1)
-	{
-		if (prevBoolNoteOccurrence != currentBoolNoteOccurrence) 
-		{
-
-			if (variation[var].randomizeNotes != (bool)currentBoolNoteOccurrence)
-			{
-				//Log("Currentbool " + String(currentBoolNoteLen), Topiary::LogType::Info);
-				variation[var].randomizeNotes = (bool)currentBoolNoteOccurrence;
-				prevBoolNoteOccurrence = currentBoolNoteOccurrence;
-				//Log("UPDATING VARIATION " + String(var), Topiary::LogType::Info);
-				broadcaster.sendActionMessage(MsgVariationDefinition);
-			}
-		}
-		
-	}
-	else
-	{
-		prevBoolNoteOccurrence = currentBoolNoteOccurrence; // init
-		//Log("INIT value not processed: " + String(currentBoolNoteLen), Topiary::LogType::Info);
-		broadcaster.sendActionMessage(MsgVariationDefinition);
-
-	}
-
-	///////////////////////////////
-	// SWING
-	///////////////////////////////
-
-	auto currentSwingAmount = swingAmount->get();  // between 0 and 100
-
-	if (prevSwingAmount != -1)
-	{
-		if (abs(prevSwingAmount - currentSwingAmount) > 0.99)
-		{
-			if (variation[var].swingValue != (int)currentSwingAmount)
-			{
-				variation[var].swingValue = (int)currentSwingAmount;
-				prevSwingAmount = currentSwingAmount;
-				//Log("UPDATING VARIATION " + String(var), Topiary::LogType::Info);
-				broadcaster.sendActionMessage(MsgVariationDefinition);
-			}
-		}
-	}
-	else
-	{
-		prevSwingAmount = currentSwingAmount; // init
-		//Log("INIT value not processed: " + String(currentRndNoteLen), Topiary::LogType::Info);
-		broadcaster.sendActionMessage(MsgVariationDefinition);
-
-	}
-
-	int currentBoolSwing = (int)boolSwing->get();  // between 0 and 127
-
-	if (prevBoolSwing != -1)
-	{
-		if (prevBoolSwing != currentBoolSwing)
-		{
-
-			if (variation[var].swing != (bool)currentBoolSwing)
-			{
-				//Log("Currentbool " + String(currentBoolNoteLen), Topiary::LogType::Info);
-				variation[var].swing = (bool)currentBoolSwing;
-				prevBoolSwing = currentBoolSwing;
-				//Log("UPDATING VARIATION " + String(var), Topiary::LogType::Info);
-				broadcaster.sendActionMessage(MsgVariationDefinition);
-			}
-		}
-
-	}
-	else
-	{
-		prevBoolSwing = currentBoolSwing; // init
-		//Log("INIT value not processed: " + String(currentBoolNoteLen), Topiary::LogType::Info);
-		broadcaster.sendActionMessage(MsgVariationDefinition);
-
-	}
-
-	///////////////////////////////
-	// TIMING
-	///////////////////////////////
-
-	auto currentRndTiming = rndTiming->get();  // between 0 and 100
-
-	if (prevRndTiming != -1)
-	{
-		if (abs(prevRndTiming - currentRndTiming) > 0.99)
-		{
-			if (variation[var].timingValue != (int)currentRndTiming)
-			{
-				variation[var].timingValue = (int)currentRndTiming;
-				prevRndTiming = currentRndTiming;
-				//Log("UPDATING VARIATION " + String(var), Topiary::LogType::Info);
-				broadcaster.sendActionMessage(MsgVariationDefinition);
-			}
-		}
-	}
-	else
-	{
-		prevRndTiming = currentRndTiming; // init
-		//Log("INIT value not processed: " + String(currentRndNoteLen), Topiary::LogType::Info);
-		broadcaster.sendActionMessage(MsgVariationDefinition);
-
-	}
-
-	int currentBoolTiming = (int)boolTiming->get();  // between 0 and 127
-
-	if (prevBoolTiming != -1)
-	{
-		if (prevBoolTiming != currentBoolTiming)
-		{
-
-			if (variation[var].randomizeTiming != (bool)currentBoolTiming)
-			{
-				//Log("Currentbool " + String(currentBoolNoteLen), Topiary::LogType::Info);
-				variation[var].randomizeTiming = (bool)currentBoolTiming;
-				prevBoolTiming = currentBoolTiming;
-				//Log("UPDATING VARIATION " + String(var), Topiary::LogType::Info);
-				broadcaster.sendActionMessage(MsgVariationDefinition);
-			}
-		}
-
-	}
-	else
-	{
-		prevBoolTiming = currentBoolTiming; // init
-		//Log("INIT value not processed: " + String(currentBoolNoteLen), Topiary::LogType::Info);
-		broadcaster.sendActionMessage(MsgVariationDefinition);
-
-	}
-
-
-	///////////////////////////////
-	// VELOCITY
-	///////////////////////////////
-
-	auto currentRndVelocity = rndVelocity->get();  // between 0 and 100
-
-	if (prevRndVelocity != -1)
-	{
-		if (abs(prevRndVelocity - currentRndVelocity) > 0.99)
-		{
-			if (variation[var].velocityValue != (int)currentRndVelocity)
-			{
-				variation[var].velocityValue = (int)currentRndVelocity;
-				prevRndVelocity = currentRndVelocity;
-				//Log("UPDATING VARIATION " + String(var), Topiary::LogType::Info);
-				broadcaster.sendActionMessage(MsgVariationDefinition);
-			}
-		}
-	}
-	else
-	{
-		prevRndVelocity = currentRndVelocity; // init
-		//Log("INIT value not processed: " + String(currentRndNoteLen), Topiary::LogType::Info);
-		broadcaster.sendActionMessage(MsgVariationDefinition);
-
-	}
-
-	int currentBoolVelocity = (int)boolVelocity->get();  // between 0 and 127
-
-	if (prevBoolVelocity != -1)
-	{
-		if (prevBoolVelocity != currentBoolVelocity)
-		{
-
-			if (variation[var].randomizeVelocity != (bool)currentBoolVelocity)
-			{
-				//Log("Currentbool " + String(currentBoolNoteLen), Topiary::LogType::Info);
-				variation[var].randomizeVelocity = (bool)currentBoolVelocity;
-				prevBoolVelocity = currentBoolVelocity;
-				//Log("UPDATING VARIATION " + String(var), Topiary::LogType::Info);
-				broadcaster.sendActionMessage(MsgVariationDefinition);
-			}
-		}
-
-	}
-	else
-	{
-		prevBoolVelocity = currentBoolVelocity; // init
-		//Log("INIT value not processed: " + String(currentBoolNoteLen), Topiary::LogType::Info);
-		broadcaster.sendActionMessage(MsgVariationDefinition);
-
-	}
-} // processPluginParameters
-
+	return noteAssignmentNote;
+}
 
 #include "../../Topiary/Source/Components/TopiaryMidiLearnEditor.cpp.h"

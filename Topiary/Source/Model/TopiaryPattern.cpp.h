@@ -198,7 +198,7 @@ void TopiaryPattern::addNote(int measure, int beat, int tick, int timestamp, int
 
 	// adds new one
 	dataList[numItems].note = note;
-	dataList[numItems].label = MidiMessage::getMidiNoteName(note, true, true, 5);
+	dataList[numItems].label = noteNumberToString(note);
 	dataList[numItems].ID = numItems + 1;
 	dataList[numItems].measure = measure;
 	dataList[numItems].beat = beat;
@@ -490,7 +490,7 @@ void TopiaryPattern::getFromModel(XmlElement *m)
 		dataList[index].midiType = child->getIntAttribute("midiType");
 		
 		if (dataList[index].midiType == Topiary::NoteOn)
-			dataList[index].label = MidiMessage::getMidiNoteName(child->getIntAttribute("note"), true, true, 5);
+			dataList[index].label = noteNumberToString(child->getIntAttribute("note"));
 		else
 			dataList[index].label = child->getStringAttribute("label");
 

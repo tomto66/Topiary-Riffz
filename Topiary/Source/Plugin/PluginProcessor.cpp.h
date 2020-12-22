@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 /*
-This file is part of Topiary, Copyright Tom Tollenaere 2018-2020.
+This file is part of Topiary, Copyright Tom Tollenaere 2018-2021.
 
 Topiary is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ TopiaryAudioProcessor::TopiaryAudioProcessor()
 #endif
 {
 	processedMidi.ensureSize(50000);
-#ifdef RIFFZ
+#if defined(RIFFZ) 
 	
 	addParameter(model.boolNoteLength = new juce::AudioParameterBool("noteLenght", // parameterID
 		"Randomize Note Length", // parameter name
@@ -56,8 +56,9 @@ TopiaryAudioProcessor::TopiaryAudioProcessor()
 		"Randomize Note Length Amount", // parameter name
 		juce::NormalisableRange<float>(0.0f, 100.0f),
 		0.0f)); // default value
+#endif 
 
-
+#if defined(RIFFZ) || defined(BEATZ)
 	addParameter(model.boolNoteOccurrence = new juce::AudioParameterBool("rndNote", // parameterID
 		"Randomize Note Occurrence", // parameter name
 		false)); // default value
@@ -239,7 +240,7 @@ bool TopiaryAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) c
 void TopiaryAudioProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
 {
 
-#ifdef RIFFZ
+#if defined(BEATZ) ||  defined(RIFFZ)
 	model.processPluginParameters();
 #endif
 
@@ -314,90 +315,94 @@ void TopiaryAudioProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer&
 	for (const MidiMessageMetadata metadata : midiMessages)
 	{
 		msg = metadata.getMessage();
-		if (msg.isNoteOn())
+		if ((model.midiChannelListening == 0) || (model.midiChannelListening == msg.getChannel()))
 		{
-			if (!model.midiLearn(msg)) {
-				// if we are ready to play and waiting for first note in, start playing
-				if (waitFFN && (runState == Topiary::Armed))
-				{
-					tellModelToRun();
-					runState = Topiary::Running;
-				}
-
-				model.processAutomation(msg); // because we may have switching by notes
-
-#ifdef RIFFZ
-				model.keytrack(msg.getNoteNumber());
-#endif
-			}
-		}
-#ifdef RIFFZ
-		else if (msg.isNoteOff())
-			model.keytracker.pop(msg.getNoteNumber());
-#endif
-		else
-		{
-			if (msg.isController())
+			if (msg.isNoteOn())
 			{
-				model.processAutomation(msg);  // automation by cc messages
-				if (!model.midiLearn(msg))
-					model.processCC(msg, &processedMidi);
+				if (!model.midiLearn(msg)) {
+					// if we are ready to play and waiting for first note in, start playing
+					if (waitFFN && (runState == Topiary::Armed))
+					{
+						tellModelToRun();
+							runState = Topiary::Running;
+					}
+
+					model.processAutomation(msg); // because we may have switching by notes
+
+#ifdef RIFFZ
+					model.keytrack(msg.getNoteNumber());
+#endif
+				}
 			}
+#ifdef RIFFZ
+			else if (msg.isNoteOff())
+				model.keytracker.pop(msg.getNoteNumber());
+#endif
 			else
 			{
-				if (msg.isMidiMachineControlMessage() && !override)
-				{   // only respond to this if not overridden
-					auto command = msg.getMidiMachineControlCommand();
-					switch (command)
-					{
-					case juce::MidiMessage::mmc_stop:
-						model.setRunState(Topiary::Ending);
-						runState = Topiary::Ending;
-						break;
-					case juce::MidiMessage::mmc_play:
-						if (waitFFN)
+				if (msg.isController())
+				{
+					model.processAutomation(msg);  // automation by cc messages
+					if (!model.midiLearn(msg))
+						model.processCC(msg, &processedMidi);
+				}
+				else
+				{
+					if (msg.isMidiMachineControlMessage() && !override)
+					{   // only respond to this if not overridden
+						auto command = msg.getMidiMachineControlCommand();
+						switch (command)
 						{
-							model.setRunState(Topiary::Armed);
-							runState = Topiary::Armed;
-						}
-						else
-						{
-							model.setRunState(Topiary::Running);
-							runState = Topiary::Running;
-						}
-						break;
-					case juce::MidiMessage::mmc_deferredplay:
-						break;
-					case juce::MidiMessage::mmc_fastforward:
-						break;
-					case juce::MidiMessage::mmc_rewind:
-						break;
-					case juce::MidiMessage::mmc_recordStart:
-						model.Log("Host sent Record - only works in editor mode.", Topiary::LogType::Warning);
-						break;
-					case juce::MidiMessage::mmc_recordStop:
-						break;
-					case juce::MidiMessage::mmc_pause:
-						break;
-					default:
-						break;
-					} // switch MMC command				
-				} // incoming MCC commands
+						case juce::MidiMessage::mmc_stop:
+							model.setRunState(Topiary::Ending);
+							runState = Topiary::Ending;
+							break;
+						case juce::MidiMessage::mmc_play:
+							if (waitFFN)
+							{
+								model.setRunState(Topiary::Armed);
+								runState = Topiary::Armed;
+							}
+							else
+							{
+								model.setRunState(Topiary::Running);
+								runState = Topiary::Running;
+							}
+							break;
+						case juce::MidiMessage::mmc_deferredplay:
+							break;
+						case juce::MidiMessage::mmc_fastforward:
+							break;
+						case juce::MidiMessage::mmc_rewind:
+							break;
+						case juce::MidiMessage::mmc_recordStart:
+							model.Log("Host sent Record - only works in editor mode.", Topiary::LogType::Warning);
+							break;
+						case juce::MidiMessage::mmc_recordStop:
+							break;
+						case juce::MidiMessage::mmc_pause:
+							break;
+						default:
+							break;
+						} // switch MMC command				
+					} // incoming MCC commands
+				}
+
 			}
-			
-		}
 
-		if (notePassThrough)
-		{
-			// pass through anything that came in
-			processedMidi.addEvent(msg, (int)msg.getTimeStamp());
-			if (logMidiOut) 
-				model.logMidi(false, msg);
-			
-		}
+			if (notePassThrough)
+			{
+				// pass through anything that came in
+				processedMidi.addEvent(msg, (int)msg.getTimeStamp());
+				if (logMidiOut)
+					model.logMidi(false, msg);
 
-		if (logMidiIn)
-			model.logMidi(true, msg);
+			}
+
+			if (logMidiIn)
+				model.logMidi(true, msg);
+
+		} // if msg on the channel(s) we are listening to
 
 	} // for loop over incoming midiBuffer 
 

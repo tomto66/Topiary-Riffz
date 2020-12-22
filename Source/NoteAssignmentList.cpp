@@ -133,7 +133,7 @@ void NoteAssignmentList::add()
 
 	// adds new empty one
 	dataList[numItems].note = 1;
-	dataList[numItems].noteLabel = MidiMessage::getMidiNoteName(1, true, true, 5);
+	dataList[numItems].noteLabel = noteNumberToString(1);
 	dataList[numItems].offset = 0;
 	dataList[numItems].ID = numItems + 1;
 	dataList[numItems].patternId = -1;

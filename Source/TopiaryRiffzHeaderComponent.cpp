@@ -39,7 +39,7 @@ TopiaryRiffzHeaderComponent::TopiaryRiffzHeaderComponent()
 	lockedEditor.setColour(TextEditor::backgroundColourId, TopiaryColour::orange);
 	lockedEditor.setColour(TextEditor::textColourId, Colours::lightyellow);
 	lockedEditor.setColour(TextEditor::outlineColourId, TopiaryColour::orange);
-
+	
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -112,7 +112,6 @@ void TopiaryRiffzHeaderComponent::actionListenerCallback(const String &message)
 	else if (message.compare(MsgTiming) == 0) 
 	{
 		timeEditor.setVisible(true);
-		lockedEditor.setVisible(true);
 		getTime();
 		startTimer(5000);
 	}
@@ -124,10 +123,9 @@ void TopiaryRiffzHeaderComponent::actionListenerCallback(const String &message)
 			transportComponent.checkModel();
 		else if (message.compare(MsgVariationEnables) == 0)
 			variationButtonsComponent.getEnabled();
-		//if (message.compare(MsgLog) == 0)
-		//	warningEditor.setVisible(false);
+		
 	}
-}
+}  // actionListenerCallBack
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -140,8 +138,6 @@ void TopiaryRiffzHeaderComponent::timerCallback()
 	else if (timeEditor.isVisible())
 	{
 		timeEditor.setVisible(false);
-		if (riffzModel->getLockState())
-			lockedEditor.setVisible(true);
 	}
 	stopTimer();
 }

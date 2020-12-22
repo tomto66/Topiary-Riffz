@@ -460,6 +460,7 @@ void TOPIARYUTILITYCOMPONENT::actionListenerCallback(const String &message)
 	{
 		getVariationControl();
 	}
+#if defined(RIFFZ) || defined(BEATZ)
 	else if (message.compare(MsgLockState) == 0)
 	{
 		if (model->getLockState())
@@ -475,6 +476,7 @@ void TOPIARYUTILITYCOMPONENT::actionListenerCallback(const String &message)
 			saveStateButton.setEnabled(false);
 		}
 	}
+#endif
 } // actionListenerCallback
 
 /////////////////////////////////////////////////////////////////////////
@@ -503,7 +505,7 @@ void TOPIARYUTILITYCOMPONENT::getVariationControl()
 		}
 		else
 		{
-			variationControlEditor[i].setText(MidiMessage::getMidiNoteName(switches[i], true, true, 5), dontSendNotification);
+			variationControlEditor[i].setText(noteNumberToString(switches[i]), dontSendNotification);
 			//Logger::outputDebugString(String("input ") + String(switches[i]));
 			//Logger::outputDebugString(String("output ") + MidiMessage::getMidiNoteName(switches[i], true, true, 5));
 

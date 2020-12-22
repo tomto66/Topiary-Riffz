@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 /*
-This file is part of Topiary Riffz, Copyright Tom Tollenaere 2018-20.
+This file is part of Topiary Riffz, Copyright Tom Tollenaere 2018-21.
 
 Topiary Riffz is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -129,8 +129,8 @@ void TopiaryRiffzMasterComponent::setModel(TopiaryRiffzModel* m)
 	patternsTable.setModel(riffzModel->getPatternList());
 	
 	riffzModel->setListener((ActionListener*)this);
-	settingComponent.keyRangeFromEditor.setModel(riffzModel, Topiary::LearnMidiId::keyrangeTo);
 	settingComponent.keyRangeFromEditor.setModel(riffzModel, Topiary::LearnMidiId::keyrangeFrom);
+	settingComponent.keyRangeToEditor.setModel(riffzModel, Topiary::LearnMidiId::keyrangeTo);
 	actionListenerCallback(MsgPatternList);
 	actionListenerCallback(MsgTransport);
 
@@ -179,7 +179,15 @@ void TopiaryRiffzMasterComponent::actionListenerCallback(const String &message)
 		patternsTable.setModel(riffzModel->getPatternList());
 		//poolTable.setModel(riffzModel->getPoolList());
 	}
-
+	else if (message.compare(MsgKeyRangeAssignment) == 0)
+	{
+		int from, to;
+		// pick up the noteAssignment from the model
+		riffzModel->getKeyRange(from, to);
+		//translate into label
+		settingComponent.keyRangeFromEditor.setText(noteNumberToString(from), dontSendNotification);
+		settingComponent.keyRangeToEditor.setText(noteNumberToString(to), dontSendNotification);
+	}
 	else if (message.compare(MsgPatternList) == 0)
 	{
 		// trigger update of pooltable & masterTable
@@ -235,8 +243,8 @@ void TopiaryRiffzMasterComponent::setSettings()
 	if (from > to)
 	{
 		riffzModel->Log("Inconsistent note range", Topiary::LogType::Warning);
-		settingComponent.keyRangeFromEditor.setText(MidiMessage::getMidiNoteName(oldFrom, true, true, 5), dontSendNotification);
-		settingComponent.keyRangeToEditor.setText(MidiMessage::getMidiNoteName(oldTo, true, true, 5), dontSendNotification);
+		settingComponent.keyRangeFromEditor.setText(noteNumberToString(oldFrom), dontSendNotification);
+		settingComponent.keyRangeToEditor.setText(noteNumberToString(oldTo), dontSendNotification);
 	}
 	else
 			riffzModel->setKeyRange(from, to);

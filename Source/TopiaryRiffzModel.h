@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 /*
-This file is part of Topiary Riffz, Copyright Tom Tollenaere 2018-21.
+This file is part of Topiary Riffz, Copyright Tom Tollenaere 2019-21.
 
 Topiary Riffz is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -121,6 +121,8 @@ public:
 	int getSwingQ(int v);
 	void setNoteOrder(int n);
 	int getNoteOrder();
+	int getNoteAssignmentNote();
+
 
 	void generateVariation(int v, int measureToGenerate); // calls the next one below for all patterns
 	void generateVariation(int v, int p, int measureToGenerate); // Generates the variation;
@@ -188,6 +190,8 @@ public:
 	void copyVariation(int from, int to) override; 
 	bool midiLearn(MidiMessage m); // called by processor
 	void record(bool b) override; // tells model to record or not; at end of recording it processes the new notes
+
+
 	void processMidiRecording() override; // add recorded events to the pattern
 	void maintainParentPattern();
 
@@ -237,7 +241,7 @@ public:
 private:
 	TopiaryPatternList patternList;
 	TopiaryPattern patternData[MAXNOPATTERNS];
-	Variation variation[8];  	// struct to hold variation detail
+	Variation variation[9];  	// struct to hold variation detail; variation 8 is used to record patterns in - not a real variation!
 	TopiaryNoteOffBuffer noteOffBuffer;
 	float prevRndNoteOccurrence;
 	int prevBoolNoteOccurrence;
@@ -249,6 +253,7 @@ private:
 	int prevBoolNoteLength;
 	float prevRndTiming;
 	int prevBoolTiming;
+	int noteAssignmentNote; // midi Learn note value to fill in in the Midi Learn editor in NoteAssignmentTable
 
 	int outputChannel = 1;		// output of plugin
 	bool lockState = false;
@@ -359,7 +364,7 @@ private:
 		addToModel(parameters, keyRangeTo, "keyRangeTo");
 		addToModel(parameters, keytracker.noteOrder, "noteOrder");
 		addToModel(parameters, lockState, "lockState");
-
+		
 		addToModel(parameters, overrideHostTransport, "overrideHostTransport");
 		addToModel(parameters, notePassThrough, "notePassThrough");
 
@@ -371,7 +376,7 @@ private:
 		addToModel(parameters, logInfo, "logInfo");
 		addToModel(parameters, filePath, "filePath");
 
-		addToModel(parameters, variationSwitchChannel, "variationSwitchChannel");
+		addToModel(parameters, midiChannelListening, "variationSwitchChannel");
 		addToModel(parameters, ccVariationSwitching, "ccVariationSwitching");
 
 		for (int i = 0; i < 8; i++) {
@@ -478,7 +483,8 @@ private:
 						else if (parameterName.compare("keyRangeTo") == 0) keyRangeTo = parameter->getIntAttribute("Value");
 						else if (parameterName.compare("latch") == 0) latch1 = parameter->getBoolAttribute("Value");
 						else if (parameterName.compare("latch2") == 0) latch2 = parameter->getBoolAttribute("Value");
-						else if (parameterName.compare("outputChannel") == 0)outputChannel = parameter->getIntAttribute("Value");
+						else if (parameterName.compare("outputChannel") == 0) outputChannel = parameter->getIntAttribute("Value");
+						
 
 						else if (parameterName.compare("WFFN") == 0)	WFFN = parameter->getBoolAttribute("Value");
 						else if (parameterName.compare("notePassThrough") == 0) 	notePassThrough = parameter->getBoolAttribute("Value");
@@ -525,7 +531,7 @@ private:
 						// automation
 						else if (parameterName.compare("variationSwitch") == 0)  variationSwitch[parameter->getIntAttribute("Index")] = parameter->getIntAttribute("Value");
 						else if (parameterName.compare("ccVariationSwitching") == 0)  ccVariationSwitching = (bool)parameter->getIntAttribute("Value");
-						else if (parameterName.compare("variationSwitchChannel") == 0)  variationSwitchChannel = parameter->getIntAttribute("Value");
+						else if (parameterName.compare("variationSwitchChannel") == 0)  midiChannelListening = parameter->getIntAttribute("Value");
 
 
 						// note assignment lists
@@ -539,7 +545,7 @@ private:
 							{
 								int note = variation[v].noteAssignmentList.dataList[n].note;
 								int patternId = variation[v].noteAssignmentList.dataList[n].patternId;
-								variation[v].noteAssignmentList.dataList[n].noteLabel = MidiMessage::getMidiNoteName(note, true, true, 5);;
+								variation[v].noteAssignmentList.dataList[n].noteLabel = noteNumberToString(note);
 								variation[v].noteAssignmentList.dataList[n].patternName = patternList.dataList[patternId].name;
 							}
 							

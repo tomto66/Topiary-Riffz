@@ -80,7 +80,7 @@ void TopiaryRiffzVariationComponent::setModel(TopiaryRiffzModel* m)
 	variationDefinitionComponent.variationCombo.setSelectedId(1);  // this will trigger a call to getVariationDefinition which gets the data
 	actionListenerCallback(MsgPatternList); // fill the pattern list
 
-	noteAssignmentComponent.noteEditor.setModel(riffzModel, Topiary::LearnMidiId::noteAssignment);
+	noteAssignmentComponent.noteEditor.setModel(riffzModel, Topiary::LearnMidiId::noteAssignmentNote);
 	
 	actionListenerCallback(MsgSelectedNoteAssignmentRowsChanged); // set some buttons right on noteAssignmentComponent
 
@@ -102,8 +102,6 @@ void TopiaryRiffzVariationComponent::setVariationDefinition()
 	{
 		initializing = false; // don't do anything but un-set initializing
 	}
-	
-	
 
 	if (variation != (variationDefinitionComponent.variationCombo.getSelectedId() - 1))
 	{
@@ -359,7 +357,7 @@ void TopiaryRiffzVariationComponent::getSwingQ()
 
 void TopiaryRiffzVariationComponent::getNoteAssignment()
 {
-
+	jassert(false); // still needed?
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -368,7 +366,7 @@ void TopiaryRiffzVariationComponent::setNoteAssignment()
 {
 	// if nothing selected in the table, save as a new one
 	// if something selected, overwrite the assignment
-	jassert(false);
+	jassert(false); // still needed?
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -379,7 +377,6 @@ void TopiaryRiffzVariationComponent::actionListenerCallback(const String &messag
 	{
 		getVariationDefinition();  
 		// be sure that the mastertables are read first so the patternCombo is set correctly !!!
-
 	}
 	else if (message.compare(MsgPatternList) == 0)
 	{
@@ -435,6 +432,13 @@ void TopiaryRiffzVariationComponent::actionListenerCallback(const String &messag
 	{
 		// update the note assignment table because note assignment got saved (among other conditions)
 		noteAssignmentComponent.noteAssignmentTable.updateContent();
+	}
+	else if (message.compare(MsgNoteAssignmentNote) == 0)
+	{
+		// pick up the noteAssignment from the model
+		int noteNumber = riffzModel->getNoteAssignmentNote();
+		//translate into label
+		noteAssignmentComponent.noteEditor.setText(noteNumberToString(noteNumber), dontSendNotification);
 	}
 	else if (message.compare(MsgSelectedNoteAssignmentRowsChanged) == 0)
 	{
