@@ -2,7 +2,7 @@
 
 Topiary Riffz is a plugin to assign midi patterns to keys, and potentially transpose these patterns.
 
-* Topiary Riffz folder contains the code and a projucer file
+* Topiary Riffz folder contains the code and a projucer file.
 * Topiary folder contains code used by other Topiary modules; code is duplicated to make it easy for you :)
 
 ## Compile yourself
